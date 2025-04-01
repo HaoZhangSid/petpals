@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discover - Match-Me Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FFF6E9',
+                        softpink: '#FFCAD4',
+                        skyblue: '#A0D2EB',
+                        mintgreen: '#C7F0DB',
+                        lavender: '#E0C3FC'
+                    },
+                    fontFamily: {
+                        nunito: ['Nunito', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #FFF6E9;
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        .nav-item:hover {
+            transform: translateY(-2px);
+        }
+        .pet-card {
+            transition: all 0.3s ease;
+        }
+        .pet-card:hover {
+            transform: translateY(-5px);
+        }
+        .like-button:hover {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-cream min-h-screen">
+    <div class="flex">
+        <!-- Sidebar Navigation (Same as previous pages) -->
+        <div class="w-64 bg-white h-screen shadow-soft fixed">
+            <div class="p-4 flex justify-center">
+                <img src="https://images.unsplash.com/photo-1560807707-8cc77767d783?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&h=100&q=80" 
+                     alt="Match-Me Logo" class="h-16 w-16 rounded-full border-2 border-softpink">
+            </div>
+            <div class="px-4 py-2">
+                <div class="bg-lavender bg-opacity-30 rounded-xl p-3 flex items-center space-x-3 mb-6">
+                    <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                         alt="User Avatar" class="h-10 w-10 rounded-full border-2 border-white">
+                    <div>
+                        <p class="text-sm font-semibold text-purple-700">Emma & Max</p>
+                        <p class="text-xs text-gray-500">Golden Retriever</p>
+                    </div>
+                </div>
+                
+                <nav class="space-y-2">
+                    <a href="dashboard.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">🏠</span>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                    <a href="my_profile.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">👤</span>
+                        <span class="font-medium">My Profile</span>
+                    </a>
+                    <a href="discover.html" class="nav-item flex items-center space-x-3 bg-mintgreen bg-opacity-30 text-green-700 p-3 rounded-xl">
+                        <span class="text-lg">🔍</span>
+                        <span class="font-medium">Discover</span>
+                    </a>
+                    <a href="messages.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">💬</span>
+                        <span class="font-medium">Messages</span>
+                        <span class="bg-softpink text-white text-xs rounded-full px-2 py-1 ml-auto">3</span>
+                    </a>
+                    <a href="connections.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">👥</span>
+                        <span class="font-medium">Connections</span>
+                    </a>
+                    <a href="settings.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">⚙️</span>
+                        <span class="font-medium">Settings</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="absolute bottom-4 w-full px-4">
+                <a href="login.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                    <span class="text-lg">🚪</span>
+                    <span class="font-medium">Logout</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="ml-64 flex-1 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-purple-700">Discover Pet Friends</h1>
+                <div class="flex space-x-4">
+                    <button class="bg-white hover:bg-gray-50 px-4 py-2 rounded-full shadow-md text-gray-700 text-sm flex items-center">
+                        <span class="mr-2">🔄</span> Refresh
+                    </button>
+                    <button class="bg-softpink hover:bg-pink-400 text-white px-4 py-2 rounded-full shadow-md text-sm transition duration-300">
+                        Filter Options
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filter Panel -->
+            <div class="bg-white rounded-2xl shadow-soft p-6 mb-8">
+                <div class="grid grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-gray-600 text-sm mb-2">Pet Type</label>
+                        <select class="w-full bg-gray-100 border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-softpink">
+                            <option>All Pets</option>
+                            <option>Dogs</option>
+                            <option>Cats</option>
+                            <option>Small Pets</option>
+                            <option>Birds</option>
+                            <option>Others</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 text-sm mb-2">Distance</label>
+                        <select class="w-full bg-gray-100 border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-softpink">
+                            <option>Any Distance</option>
+                            <option>Within 5 miles</option>
+                            <option>Within 10 miles</option>
+                            <option>Within 25 miles</option>
+                            <option>Within 50 miles</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 text-sm mb-2">Age</label>
+                        <select class="w-full bg-gray-100 border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-softpink">
+                            <option>Any Age</option>
+                            <option>Puppy/Kitten (0-1 year)</option>
+                            <option>Young (1-3 years)</option>
+                            <option>Adult (3-8 years)</option>
+                            <option>Senior (8+ years)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 text-sm mb-2">Sort By</label>
+                        <select class="w-full bg-gray-100 border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-softpink">
+                            <option>Closest First</option>
+                            <option>Recently Active</option>
+                            <option>New Members</option>
+                            <option>Most Compatible</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <label class="block text-gray-600 text-sm mb-2">Pet Personality</label>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-lavender bg-opacity-30 text-purple-700 text-xs px-3 py-1 rounded-full cursor-pointer hover:bg-lavender">Friendly</span>
+                        <span class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full cursor-pointer hover:bg-gray-200">Energetic</span>
+                        <span class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full cursor-pointer hover:bg-gray-200">Calm</span>
+                        <span class="bg-skyblue bg-opacity-30 text-blue-700 text-xs px-3 py-1 rounded-full cursor-pointer hover:bg-skyblue">Playful</span>
+                        <span class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full cursor-pointer hover:bg-gray-200">Shy</span>
+                        <span class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full cursor-pointer hover:bg-gray-200">Independent</span>
+                        <span class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full cursor-pointer hover:bg-gray-200">Curious</span>
+                        <span class="bg-mintgreen bg-opacity-30 text-green-700 text-xs px-3 py-1 rounded-full cursor-pointer hover:bg-mintgreen">Social</span>
+                        <span class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full cursor-pointer hover:bg-gray-200">Protective</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Discover Grid -->
+            <div class="grid grid-cols-3 gap-8">
+                <!-- Pet Card 1 -->
+                <div class="bg-white rounded-2xl shadow-soft overflow-hidden pet-card border-2 border-softpink">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=300&q=80" 
+                             alt="Dog" class="w-full h-52 object-cover">
+                        <div class="absolute top-4 right-4 bg-softpink text-white text-xs rounded-full px-2 py-1">
+                            1.2 miles away
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg text-purple-700">Mike & Rex</h3>
+                                <p class="text-gray-600 text-sm">German Shepherd • 4 years</p>
+                            </div>
+                            <div class="bg-mintgreen bg-opacity-30 text-green-700 text-xs px-2 py-1 rounded-full">
+                                Active now
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-700 text-sm mb-4">
+                            Rex is a friendly and well-trained German Shepherd. He loves playing fetch and going on long walks. Looking for playmates who can match his energy!
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="bg-lavender bg-opacity-30 text-purple-700 text-xs px-2 py-1 rounded-full">Friendly</span>
+                            <span class="bg-skyblue bg-opacity-30 text-blue-700 text-xs px-2 py-1 rounded-full">Playful</span>
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full">Intelligent</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <button class="like-button bg-softpink hover:bg-pink-400 text-white w-12 h-12 rounded-full flex items-center justify-center transition duration-300 text-xl">
+                                ❤️
+                            </button>
+                            <button class="bg-skyblue hover:bg-blue-400 text-white px-6 py-3 rounded-full flex-grow ml-3 transition duration-300">
+                                Connect
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pet Card 2 -->
+                <div class="bg-white rounded-2xl shadow-soft overflow-hidden pet-card border-2 border-skyblue">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=300&q=80" 
+                             alt="Cat" class="w-full h-52 object-cover">
+                        <div class="absolute top-4 right-4 bg-softpink text-white text-xs rounded-full px-2 py-1">
+                            0.8 miles away
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg text-purple-700">Lisa & Mittens</h3>
+                                <p class="text-gray-600 text-sm">Persian Cat • 2 years</p>
+                            </div>
+                            <div class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
+                                2 hours ago
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-700 text-sm mb-4">
+                            Mittens is a beautiful Persian cat who enjoys lounging around and occasional play sessions. She's calm, gentle, and gets along well with other cats.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="bg-mintgreen bg-opacity-30 text-green-700 text-xs px-2 py-1 rounded-full">Calm</span>
+                            <span class="bg-lavender bg-opacity-30 text-purple-700 text-xs px-2 py-1 rounded-full">Friendly</span>
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full">Gentle</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <button class="like-button bg-softpink hover:bg-pink-400 text-white w-12 h-12 rounded-full flex items-center justify-center transition duration-300 text-xl">
+                                ❤️
+                            </button>
+                            <button class="bg-skyblue hover:bg-blue-400 text-white px-6 py-3 rounded-full flex-grow ml-3 transition duration-300">
+                                Connect
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pet Card 3 -->
+                <div class="bg-white rounded-2xl shadow-soft overflow-hidden pet-card border-2 border-mintgreen">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=300&q=80" 
+                             alt="Dogs" class="w-full h-52 object-cover">
+                        <div class="absolute top-4 right-4 bg-softpink text-white text-xs rounded-full px-2 py-1">
+                            2.5 miles away
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg text-purple-700">Alex & Coco</h3>
+                                <p class="text-gray-600 text-sm">Corgi • 1 year</p>
+                            </div>
+                            <div class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
+                                5 hours ago
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-700 text-sm mb-4">
+                            Coco is an energetic corgi puppy who loves to play and make new friends. She's still in training but learns quickly and gets along with dogs of all sizes!
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="bg-skyblue bg-opacity-30 text-blue-700 text-xs px-2 py-1 rounded-full">Playful</span>
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full">Energetic</span>
+                            <span class="bg-lavender bg-opacity-30 text-purple-700 text-xs px-2 py-1 rounded-full">Friendly</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <button class="like-button bg-softpink hover:bg-pink-400 text-white w-12 h-12 rounded-full flex items-center justify-center transition duration-300 text-xl">
+                                ❤️
+                            </button>
+                            <button class="bg-skyblue hover:bg-blue-400 text-white px-6 py-3 rounded-full flex-grow ml-3 transition duration-300">
+                                Connect
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pet Card 4 -->
+                <div class="bg-white rounded-2xl shadow-soft overflow-hidden pet-card border-2 border-lavender">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=300&q=80" 
+                             alt="Cat" class="w-full h-52 object-cover">
+                        <div class="absolute top-4 right-4 bg-softpink text-white text-xs rounded-full px-2 py-1">
+                            3.1 miles away
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg text-purple-700">David & Whiskers</h3>
+                                <p class="text-gray-600 text-sm">Tabby Cat • 3 years</p>
+                            </div>
+                            <div class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
+                                Yesterday
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-700 text-sm mb-4">
+                            Whiskers is a curious and independent tabby who occasionally enjoys the company of other cats. He's playful but also appreciates his alone time.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full">Curious</span>
+                            <span class="bg-skyblue bg-opacity-30 text-blue-700 text-xs px-2 py-1 rounded-full">Playful</span>
+                            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">Independent</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <button class="like-button bg-softpink hover:bg-pink-400 text-white w-12 h-12 rounded-full flex items-center justify-center transition duration-300 text-xl">
+                                ❤️
+                            </button>
+                            <button class="bg-skyblue hover:bg-blue-400 text-white px-6 py-3 rounded-full flex-grow ml-3 transition duration-300">
+                                Connect
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pet Card 5 -->
+                <div class="bg-white rounded-2xl shadow-soft overflow-hidden pet-card border-2 border-softpink">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=300&q=80" 
+                             alt="Dog" class="w-full h-52 object-cover">
+                        <div class="absolute top-4 right-4 bg-softpink text-white text-xs rounded-full px-2 py-1">
+                            4.7 miles away
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg text-purple-700">Jessica & Lucy</h3>
+                                <p class="text-gray-600 text-sm">Beagle • 5 years</p>
+                            </div>
+                            <div class="bg-mintgreen bg-opacity-30 text-green-700 text-xs px-2 py-1 rounded-full">
+                                Active now
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-700 text-sm mb-4">
+                            Lucy is a sweet beagle who loves going on adventures and sniffing out new places. She's friendly with all dogs and enjoys playing in open spaces.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="bg-lavender bg-opacity-30 text-purple-700 text-xs px-2 py-1 rounded-full">Friendly</span>
+                            <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full">Curious</span>
+                            <span class="bg-skyblue bg-opacity-30 text-blue-700 text-xs px-2 py-1 rounded-full">Playful</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <button class="like-button bg-softpink hover:bg-pink-400 text-white w-12 h-12 rounded-full flex items-center justify-center transition duration-300 text-xl">
+                                ❤️
+                            </button>
+                            <button class="bg-skyblue hover:bg-blue-400 text-white px-6 py-3 rounded-full flex-grow ml-3 transition duration-300">
+                                Connect
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pet Card 6 -->
+                <div class="bg-white rounded-2xl shadow-soft overflow-hidden pet-card border-2 border-skyblue">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1596854407944-bf87f6fdd49e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=300&q=80" 
+                             alt="Dog" class="w-full h-52 object-cover">
+                        <div class="absolute top-4 right-4 bg-softpink text-white text-xs rounded-full px-2 py-1">
+                            1.9 miles away
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <div>
+                                <h3 class="font-bold text-lg text-purple-700">Sam & Buddy</h3>
+                                <p class="text-gray-600 text-sm">Labrador • 2 years</p>
+                            </div>
+                            <div class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
+                                8 hours ago
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-700 text-sm mb-4">
+                            Buddy is a loving labrador who enjoys swimming and playing with balls. He's very social and always excited to make new friends at the dog park.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="bg-skyblue bg-opacity-30 text-blue-700 text-xs px-2 py-1 rounded-full">Playful</span>
+                            <span class="bg-lavender bg-opacity-30 text-purple-700 text-xs px-2 py-1 rounded-full">Friendly</span>
+                            <span class="bg-mintgreen bg-opacity-30 text-green-700 text-xs px-2 py-1 rounded-full">Social</span>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <button class="like-button bg-softpink hover:bg-pink-400 text-white w-12 h-12 rounded-full flex items-center justify-center transition duration-300 text-xl">
+                                ❤️
+                            </button>
+                            <button class="bg-skyblue hover:bg-blue-400 text-white px-6 py-3 rounded-full flex-grow ml-3 transition duration-300">
+                                Connect
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="flex justify-center mt-10">
+                <div class="flex items-center space-x-2">
+                    <button class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-gray-100">
+                        <span class="text-gray-500">←</span>
+                    </button>
+                    <button class="w-10 h-10 rounded-full bg-softpink text-white shadow-sm flex items-center justify-center">
+                        1
+                    </button>
+                    <button class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-gray-100">
+                        2
+                    </button>
+                    <button class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-gray-100">
+                        3
+                    </button>
+                    <span class="text-gray-500">...</span>
+                    <button class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-gray-100">
+                        8
+                    </button>
+                    <button class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center hover:bg-gray-100">
+                        <span class="text-gray-500">→</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

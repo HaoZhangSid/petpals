@@ -1,0 +1,26 @@
+/* 添加到你的全局CSS文件 */
+body {
+  font-family: 'Nunito', sans-serif;
+  background-color: #FFF6E9;
+}
+
+.paw-icon:after {
+  content: "🐾";
+  margin-left: 5px;
+}
+
+.nav-item {
+  transition: all 0.3s ease;
+}
+
+.nav-item:hover {
+  transform: translateY(-2px);
+}
+
+.recommendation-card {
+  transition: all 0.3s ease;
+}
+
+.recommendation-card:hover {
+  transform: translateY(-8px);
+} 

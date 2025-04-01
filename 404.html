@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - Match-Me Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FFF6E9',
+                        softpink: '#FFCAD4',
+                        skyblue: '#A0D2EB',
+                        mintgreen: '#C7F0DB',
+                        lavender: '#E0C3FC'
+                    },
+                    fontFamily: {
+                        nunito: ['Nunito', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #FFF6E9;
+        }
+        .paw-print {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        .dog-animation {
+            animation: wiggle 2s ease-in-out infinite;
+        }
+        @keyframes wiggle {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+    </style>
+</head>
+<body class="bg-cream min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-2xl text-center">
+        <div class="mb-8 flex justify-center">
+            <img src="https://images.unsplash.com/photo-1560807707-8cc77767d783?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&h=100&q=80" 
+                 alt="Match-Me Logo" class="h-20 w-20 rounded-full border-2 border-softpink">
+        </div>
+        
+        <h1 class="text-6xl font-bold mb-4 text-purple-700">4<span class="text-7xl paw-print inline-block">🐾</span>4</h1>
+        
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Oops! Page Not Found</h2>
+        
+        <div class="bg-white rounded-2xl shadow-soft p-8 mb-8 relative overflow-hidden">
+            <div class="absolute -right-8 -bottom-8 opacity-10 text-9xl">
+                🐾
+            </div>
+            
+            <div class="mb-8 flex justify-center">
+                <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80" 
+                     alt="Cute Dog" class="w-40 h-40 rounded-full border-4 border-softpink dog-animation">
+            </div>
+            
+            <p class="text-gray-700 text-lg mb-8">
+                Uh oh! Looks like the page you're looking for has wandered off. Our furry friend is trying to help find it, but in the meantime, let's get you back on track.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <a href="#" class="bg-softpink hover:bg-pink-400 text-white px-8 py-3 rounded-full transition duration-300 text-lg shadow-md w-full sm:w-auto">
+                    Go Home
+                </a>
+                <a href="#" class="bg-skyblue hover:bg-blue-400 text-white px-8 py-3 rounded-full transition duration-300 text-lg shadow-md w-full sm:w-auto">
+                    Discover Pets
+                </a>
+            </div>
+        </div>
+        
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="#" class="text-purple-700 hover:text-purple-900 text-sm">Help & Support</a>
+            <span class="text-gray-400">•</span>
+            <a href="#" class="text-purple-700 hover:text-purple-900 text-sm">Contact Us</a>
+            <span class="text-gray-400">•</span>
+            <a href="#" class="text-purple-700 hover:text-purple-900 text-sm">Report a Bug</a>
+        </div>
+    </div>
+</body>
+</html>

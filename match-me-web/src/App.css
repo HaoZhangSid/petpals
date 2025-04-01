@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  /* 自定义颜色 */
+  --color-cream: #FFF6E9;
+  --color-softpink: #FFCAD4;
+  --color-skyblue: #A0D2EB;
+  --color-mintgreen: #C7F0DB;
+  --color-lavender: #E0C3FC;
+
+  /* 自定义字体 */
+  --font-nunito: 'Nunito', sans-serif;
+
+  /* 自定义阴影 */
+  --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+}

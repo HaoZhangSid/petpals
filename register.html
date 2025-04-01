@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Match-Me Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FFF6E9',
+                        softpink: '#FFCAD4',
+                        skyblue: '#A0D2EB',
+                        mintgreen: '#C7F0DB',
+                        lavender: '#E0C3FC'
+                    },
+                    fontFamily: {
+                        nunito: ['Nunito', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #FFF6E9;
+        }
+        .paw-btn {
+            position: relative;
+        }
+        .paw-btn:after {
+            content: "🐾";
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .register-animation {
+            animation: bounce 6s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .pet-select-item {
+            transition: all 0.3s ease;
+        }
+        .pet-select-item:hover {
+            transform: translateY(-5px);
+        }
+        .pet-select-item.selected {
+            border-color: #FFCAD4;
+            background-color: #FFCAD4;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-cream min-h-screen">
+    <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-6xl bg-white rounded-3xl shadow-soft overflow-hidden">
+            <!-- Left Column - Image and Info -->
+            <div class="hidden md:block relative bg-gradient-to-r from-skyblue to-mintgreen">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="text-center p-8 register-animation">
+                        <img src="https://images.unsplash.com/photo-1517849845537-4d257902454a?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&h=400&q=80" 
+                             alt="Cute Dog" class="w-60 h-60 object-cover rounded-full border-8 border-white shadow-lg mx-auto mb-6">
+                        <h2 class="text-2xl font-bold text-white mb-2">Join Our Pawsome Community!</h2>
+                        <p class="text-white text-opacity-90 mb-6">Create an account to connect with pet lovers, find playdates, and share beautiful moments with your furry friends.</p>
+                        <div class="flex justify-center space-x-2">
+                            <span class="w-3 h-3 bg-white rounded-full"></span>
+                            <span class="w-3 h-3 bg-white bg-opacity-60 rounded-full"></span>
+                            <span class="w-3 h-3 bg-white bg-opacity-60 rounded-full"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-mintgreen to-transparent"></div>
+                <div class="absolute top-6 right-6">
+                    <div class="bg-white bg-opacity-30 backdrop-blur-sm rounded-full px-4 py-2 text-white shadow-sm">
+                        <span class="mr-2">💖</span> Join 50,000+ pet parents
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column - Registration Form -->
+            <div class="p-8 md:p-10 flex flex-col justify-center">
+                <div class="mb-6 text-center md:text-left">
+                    <img src="https://images.unsplash.com/photo-1560807707-8cc77767d783?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&h=100&q=80" 
+                         alt="Match-Me Logo" class="w-20 h-20 rounded-full border-4 border-skyblue shadow-md inline-block">
+                </div>
+                
+                <h1 class="text-3xl font-bold text-purple-700 mb-2">Create Your Account</h1>
+                <p class="text-gray-600 mb-8">Fill in your details to join our pet-loving community.</p>
+                
+                <form class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">First Name</label>
+                            <div class="bg-gray-100 rounded-full px-5 py-3 flex items-center border border-mintgreen shadow-sm focus-within:ring-2 focus-within:ring-softpink focus-within:border-softpink">
+                                <span class="text-gray-400 mr-3">👤</span>
+                                <input type="text" placeholder="Your first name" class="bg-transparent w-full focus:outline-none">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Last Name</label>
+                            <div class="bg-gray-100 rounded-full px-5 py-3 flex items-center border border-mintgreen shadow-sm focus-within:ring-2 focus-within:ring-softpink focus-within:border-softpink">
+                                <span class="text-gray-400 mr-3">👤</span>
+                                <input type="text" placeholder="Your last name" class="bg-transparent w-full focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Email Address</label>
+                        <div class="bg-gray-100 rounded-full px-5 py-3 flex items-center border border-mintgreen shadow-sm focus-within:ring-2 focus-within:ring-softpink focus-within:border-softpink">
+                            <span class="text-gray-400 mr-3">📧</span>
+                            <input type="email" placeholder="Your email address" class="bg-transparent w-full focus:outline-none">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Password</label>
+                            <div class="bg-gray-100 rounded-full px-5 py-3 flex items-center border border-mintgreen shadow-sm focus-within:ring-2 focus-within:ring-softpink focus-within:border-softpink">
+                                <span class="text-gray-400 mr-3">🔒</span>
+                                <input type="password" placeholder="Create password" class="bg-transparent w-full focus:outline-none">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Confirm Password</label>
+                            <div class="bg-gray-100 rounded-full px-5 py-3 flex items-center border border-mintgreen shadow-sm focus-within:ring-2 focus-within:ring-softpink focus-within:border-softpink">
+                                <span class="text-gray-400 mr-3">🔒</span>
+                                <input type="password" placeholder="Confirm password" class="bg-transparent w-full focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Your Location</label>
+                        <div class="bg-gray-100 rounded-full px-5 py-3 flex items-center border border-mintgreen shadow-sm focus-within:ring-2 focus-within:ring-softpink focus-within:border-softpink">
+                            <span class="text-gray-400 mr-3">📍</span>
+                            <input type="text" placeholder="City, State" class="bg-transparent w-full focus:outline-none">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-3">What type of pet do you have?</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="pet-select-item bg-gray-100 rounded-2xl p-4 text-center cursor-pointer border-2 border-transparent hover:border-softpink selected">
+                                <span class="text-3xl block mb-2">🐶</span>
+                                <span class="text-sm font-medium">Dog</span>
+                            </div>
+                            <div class="pet-select-item bg-gray-100 rounded-2xl p-4 text-center cursor-pointer border-2 border-transparent hover:border-softpink">
+                                <span class="text-3xl block mb-2">🐱</span>
+                                <span class="text-sm font-medium">Cat</span>
+                            </div>
+                            <div class="pet-select-item bg-gray-100 rounded-2xl p-4 text-center cursor-pointer border-2 border-transparent hover:border-softpink">
+                                <span class="text-3xl block mb-2">🐰</span>
+                                <span class="text-sm font-medium">Small Pet</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Pet's Name</label>
+                        <div class="bg-gray-100 rounded-full px-5 py-3 flex items-center border border-mintgreen shadow-sm focus-within:ring-2 focus-within:ring-softpink focus-within:border-softpink">
+                            <span class="text-gray-400 mr-3">🏷️</span>
+                            <input type="text" placeholder="Your pet's name" class="bg-transparent w-full focus:outline-none">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="terms" class="rounded-md text-softpink focus:ring-softpink">
+                        <label for="terms" class="ml-2 text-sm text-gray-600">
+                            I agree to the <a href="#" class="text-skyblue hover:underline">Terms of Service</a> and <a href="#" class="text-skyblue hover:underline">Privacy Policy</a>
+                        </label>
+                    </div>
+                    
+                    <button class="paw-btn w-full bg-softpink hover:bg-pink-400 text-white font-bold py-4 px-8 rounded-full transition duration-300 shadow-md hover:shadow-lg">
+                        Create Account
+                    </button>
+                </form>
+                
+                <div class="mt-6 text-center">
+                    <span class="text-gray-600">Already have an account?</span>
+                    <a href="#" class="text-skyblue hover:underline ml-1 font-semibold">Sign in</a>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-100 text-center">
+                    <p class="text-sm text-gray-500 mb-4">Or sign up with</p>
+                    <div class="flex justify-center space-x-4">
+                        <button class="bg-white border border-gray-200 rounded-full p-3 shadow-sm hover:shadow-md transition duration-300">
+                            <span class="text-xl">G</span>
+                        </button>
+                        <button class="bg-white border border-gray-200 rounded-full p-3 shadow-sm hover:shadow-md transition duration-300">
+                            <span class="text-xl">f</span>
+                        </button>
+                        <button class="bg-white border border-gray-200 rounded-full p-3 shadow-sm hover:shadow-md transition duration-300">
+                            <span class="text-xl">in</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections - Match-Me Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FFF6E9',
+                        softpink: '#FFCAD4',
+                        skyblue: '#A0D2EB',
+                        mintgreen: '#C7F0DB',
+                        lavender: '#E0C3FC'
+                    },
+                    fontFamily: {
+                        nunito: ['Nunito', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #FFF6E9;
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        .nav-item:hover {
+            transform: translateY(-2px);
+        }
+        .connection-card {
+            transition: all 0.3s ease;
+        }
+        .connection-card:hover {
+            transform: translateY(-5px);
+        }
+        .request-card {
+            transition: all 0.2s ease;
+        }
+        .request-card:hover {
+            transform: translateX(5px);
+        }
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-cream min-h-screen">
+    <div class="flex">
+        <!-- Sidebar Navigation (Same as previous pages) -->
+        <div class="w-64 bg-white h-screen shadow-soft fixed">
+            <div class="p-4 flex justify-center">
+                <img src="https://images.unsplash.com/photo-1560807707-8cc77767d783?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&h=100&q=80" 
+                     alt="Match-Me Logo" class="h-16 w-16 rounded-full border-2 border-softpink">
+            </div>
+            <div class="px-4 py-2">
+                <div class="bg-lavender bg-opacity-30 rounded-xl p-3 flex items-center space-x-3 mb-6">
+                    <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                         alt="User Avatar" class="h-10 w-10 rounded-full border-2 border-white">
+                    <div>
+                        <p class="text-sm font-semibold text-purple-700">Emma & Max</p>
+                        <p class="text-xs text-gray-500">Golden Retriever</p>
+                    </div>
+                </div>
+                
+                <nav class="space-y-2">
+                    <a href="dashboard.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">🏠</span>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                    <a href="my_profile.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">👤</span>
+                        <span class="font-medium">My Profile</span>
+                    </a>
+                    <a href="discover.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">🔍</span>
+                        <span class="font-medium">Discover</span>
+                    </a>
+                    <a href="messages.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">💬</span>
+                        <span class="font-medium">Messages</span>
+                        <span class="bg-softpink text-white text-xs rounded-full px-2 py-1 ml-auto">3</span>
+                    </a>
+                    <a href="connections.html" class="nav-item flex items-center space-x-3 bg-skyblue bg-opacity-30 text-blue-700 p-3 rounded-xl">
+                        <span class="text-lg">👥</span>
+                        <span class="font-medium">Connections</span>
+                    </a>
+                    <a href="settings.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">⚙️</span>
+                        <span class="font-medium">Settings</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="absolute bottom-4 w-full px-4">
+                <a href="login.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                    <span class="text-lg">🚪</span>
+                    <span class="font-medium">Logout</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="ml-64 flex-1 p-8">
+            <div class="mb-8">
+                <h1 class="text-2xl font-bold text-purple-700 mb-2">My Connections</h1>
+                <p class="text-gray-600">Manage your pet friend connections and requests</p>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="mb-8">
+                <div class="border-b border-gray-200">
+                    <nav class="flex -mb-px">
+                        <a href="#" class="py-4 px-6 border-b-2 border-skyblue text-skyblue font-semibold">
+                            Connected Friends
+                        </a>
+                        <a href="#" class="py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            Pending Requests <span class="bg-softpink text-white text-xs rounded-full px-2 py-0.5 ml-2">3</span>
+                        </a>
+                        <a href="#" class="py-4 px-6 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            Sent Requests
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Connection Stats -->
+            <div class="grid grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-2xl p-4 shadow-soft border border-skyblue">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-gray-500 text-sm">Total Connections</h3>
+                        <span class="text-2xl">👥</span>
+                    </div>
+                    <p class="text-3xl font-bold text-purple-700">12</p>
+                    <p class="text-green-500 text-xs mt-2">↑ 3 from last month</p>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-soft border border-softpink">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-gray-500 text-sm">Pending Requests</h3>
+                        <span class="text-2xl">🔔</span>
+                    </div>
+                    <p class="text-3xl font-bold text-purple-700">3</p>
+                    <p class="text-green-500 text-xs mt-2">↑ 1 from yesterday</p>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-soft border border-mintgreen">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-gray-500 text-sm">Active Chats</h3>
+                        <span class="text-2xl">💬</span>
+                    </div>
+                    <p class="text-3xl font-bold text-purple-700">5</p>
+                    <p class="text-green-500 text-xs mt-2">↑ 2 from last week</p>
+                </div>
+                <div class="bg-white rounded-2xl p-4 shadow-soft border border-lavender">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-gray-500 text-sm">Upcoming Playdates</h3>
+                        <span class="text-2xl">📅</span>
+                    </div>
+                    <p class="text-3xl font-bold text-purple-700">2</p>
+                    <p class="text-gray-500 text-xs mt-2">No change from last week</p>
+                </div>
+            </div>
+            
+            <!-- Connected Friends -->
+            <div class="mb-12">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-purple-700">Connected Friends</h2>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Search connections..." 
+                                   class="bg-white rounded-full py-2 pl-10 pr-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-softpink w-64">
+                            <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
+                        </div>
+                        <select class="bg-white rounded-full py-2 px-4 shadow-sm border-0 focus:outline-none focus:ring-2 focus:ring-softpink">
+                            <option>Sort by: Recent</option>
+                            <option>Sort by: Name (A-Z)</option>
+                            <option>Sort by: Distance</option>
+                            <option>Sort by: Pet Type</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-6">
+                    <!-- Connection Card 1 -->
+                    <div class="bg-white rounded-2xl shadow-soft overflow-hidden connection-card border-2 border-skyblue">
+                        <div class="p-5">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center">
+                                    <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="Dog" class="w-14 h-14 rounded-full border-2 border-skyblue">
+                                    <div class="ml-4">
+                                        <h3 class="font-bold text-lg text-purple-700">Mike & Rex</h3>
+                                        <p class="text-gray-600 text-sm">German Shepherd • 4 yrs</p>
+                                        <div class="mt-1 flex items-center">
+                                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                                            <span class="text-green-600 text-xs">Online now</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="relative group">
+                                    <button class="p-1 rounded-full hover:bg-gray-100">
+                                        <span class="text-gray-400">•••</span>
+                                    </button>
+                                    <div class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-soft p-2 hidden group-hover:block z-10">
+                                        <a href="#" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">View Profile</a>
+                                        <a href="#" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">Schedule Playdate</a>
+                                        <a href="#" class="block px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">Remove Connection</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex items-center text-sm text-gray-600">
+                                <span class="mr-3">📍</span>
+                                <span>1.2 miles away</span>
+                            </div>
+                            
+                            <div class="mt-1 flex items-center text-sm text-gray-600">
+                                <span class="mr-3">🤝</span>
+                                <span>Connected 2 weeks ago</span>
+                            </div>
+                            
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <span class="bg-lavender bg-opacity-30 text-purple-700 text-xs px-3 py-1 rounded-full">Friendly</span>
+                                <span class="bg-skyblue bg-opacity-30 text-blue-700 text-xs px-3 py-1 rounded-full">Playful</span>
+                                <span class="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full">Intelligent</span>
+                            </div>
+                            
+                            <div class="mt-4 grid grid-cols-2 gap-2">
+                                <button class="bg-skyblue hover:bg-blue-400 text-white py-2 rounded-full flex items-center justify-center transition duration-300">
+                                    <span class="mr-1">💬</span> Message
+                                </button>
+                                <button class="bg-softpink hover:bg-pink-400 text-white py-2 rounded-full flex items-center justify-center transition duration-300">
+                                    <span class="mr-1">📅</span> Schedule
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Connection Card 2 -->
+                    <div class="bg-white rounded-2xl shadow-soft overflow-hidden connection-card border-2 border-softpink">
+                        <div class="p-5">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center">
+                                    <img src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="Cat" class="w-14 h-14 rounded-full border-2 border-softpink">
+                                    <div class="ml-4">
+                                        <h3 class="font-bold text-lg text-purple-700">Lisa & Mittens</h3>
+                                        <p class="text-gray-600 text-sm">Persian Cat • 2 yrs</p>
+                                        <div class="mt-1 flex items-center">
+                                            <span class="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                                            <span class="text-gray-600 text-xs">Last seen 2h ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="relative group">
+                                    <button class="p-1 rounded-full hover:bg-gray-100">
+                                        <span class="text-gray-400">•••</span>
+                                    </button>
+                                    <div class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-soft p-2 hidden group-hover:block z-10">
+                                        <a href="#" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">View Profile</a>
+                                        <a href="#" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">Schedule Playdate</a>
+                                        <a href="#" class="block px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">Remove Connection</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex items-center text-sm text-gray-600">
+                                <span class="mr-3">📍</span>
+                                <span>0.8 miles away</span>
+                            </div>
+                            
+                            <div class="mt-1 flex items-center text-sm text-gray-600">
+                                <span class="mr-3">🤝</span>
+                                <span>Connected 1 month ago</span>
+                            </div>
+                            
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <span class="bg-mintgreen bg-opacity-30 text-green-700 text-xs px-3 py-1 rounded-full">Calm</span>
+                                <span class="bg-lavender bg-opacity-30 text-purple-700 text-xs px-3 py-1 rounded-full">Friendly</span>
+                                <span class="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full">Gentle</span>
+                            </div>
+                            
+                            <div class="mt-4 grid grid-cols-2 gap-2">
+                                <button class="bg-skyblue hover:bg-blue-400 text-white py-2 rounded-full flex items-center justify-center transition duration-300">
+                                    <span class="mr-1">💬</span> Message
+                                </button>
+                                <button class="bg-softpink hover:bg-pink-400 text-white py-2 rounded-full flex items-center justify-center transition duration-300">
+                                    <span class="mr-1">📅</span> Schedule
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Connection Card 3 -->
+                    <div class="bg-white rounded-2xl shadow-soft overflow-hidden connection-card border-2 border-mintgreen">
+                        <div class="p-5">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center">
+                                    <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="Dog" class="w-14 h-14 rounded-full border-2 border-mintgreen">
+                                    <div class="ml-4">
+                                        <h3 class="font-bold text-lg text-purple-700">Alex & Coco</h3>
+                                        <p class="text-gray-600 text-sm">Corgi • 1 yr</p>
+                                        <div class="mt-1 flex items-center">
+                                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                                            <span class="text-green-600 text-xs">Online now</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="relative group">
+                                    <button class="p-1 rounded-full hover:bg-gray-100">
+                                        <span class="text-gray-400">•••</span>
+                                    </button>
+                                    <div class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-soft p-2 hidden group-hover:block z-10">
+                                        <a href="#" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">View Profile</a>
+                                        <a href="#" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">Schedule Playdate</a>
+                                        <a href="#" class="block px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">Remove Connection</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex items-center text-sm text-gray-600">
+                                <span class="mr-3">📍</span>
+                                <span>2.5 miles away</span>
+                            </div>
+                            
+                            <div class="mt-1 flex items-center text-sm text-gray-600">
+                                <span class="mr-3">🤝</span>
+                                <span>Connected 2 days ago</span>
+                            </div>
+                            
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <span class="bg-skyblue bg-opacity-30 text-blue-700 text-xs px-3 py-1 rounded-full">Playful</span>
+                                <span class="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full">Energetic</span>
+                                <span class="bg-lavender bg-opacity-30 text-purple-700 text-xs px-3 py-1 rounded-full">Friendly</span>
+                            </div>
+                            
+                            <div class="mt-4 grid grid-cols-2 gap-2">
+                                <button class="bg-skyblue hover:bg-blue-400 text-white py-2 rounded-full flex items-center justify-center transition duration-300">
+                                    <span class="mr-1">💬</span> Message
+                                </button>
+                                <button class="bg-softpink hover:bg-pink-400 text-white py-2 rounded-full flex items-center justify-center transition duration-300">
+                                    <span class="mr-1">📅</span> Schedule
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Connection Card 4 -->
+                    <div class="bg-white rounded-2xl shadow-soft overflow-hidden connection-card border-2 border-lavender">
+                        <div class="p-5">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center">
+                                    <img src="https://images.unsplash.com/photo-1517423440428-a5a00ad493e8?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="Cat" class="w-14 h-14 rounded-full border-2 border-lavender">
+                                    <div class="ml-4">
+                                        <h3 class="font-bold text-lg text-purple-700">Sarah & Whiskers</h3>
+                                        <p class="text-gray-600 text-sm">Tabby Cat • 3 yrs</p>
+                                        <div class="mt-1 flex items-center">
+                                            <span class="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                                            <span class="text-gray-600 text-xs">Last seen yesterday</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="relative group">
+                                    <button class="p-1 rounded-full hover:bg-gray-100">
+                                        <span class="text-gray-400">•••</span>
+                                    </button>
+                                    <div class="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-soft p-2 hidden group-hover:block z-10">
+                                        <a href="#" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">View Profile</a>
+                                        <a href="#" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">Schedule Playdate</a>
+                                        <a href="#" class="block px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">Remove Connection</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex items-center text-sm text-gray-600">
+                                <span class="mr-3">📍</span>
+                                <span>3.1 miles away</span>
+                            </div>
+                            
+                            <div class="mt-1 flex items-center text-sm text-gray-600">
+                                <span class="mr-3">🤝</span>
+                                <span>Connected 3 weeks ago</span>
+                            </div>
+                            
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <span class="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full">Curious</span>
+                                <span class="bg-skyblue bg-opacity-30 text-blue-700 text-xs px-3 py-1 rounded-full">Playful</span>
+                                <span class="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full">Independent</span>
+                            </div>
+                            
+                            <div class="mt-4 grid grid-cols-2 gap-2">
+                                <button class="bg-skyblue hover:bg-blue-400 text-white py-2 rounded-full flex items-center justify-center transition duration-300">
+                                    <span class="mr-1">💬</span> Message
+                                </button>
+                                <button class="bg-softpink hover:bg-pink-400 text-white py-2 rounded-full flex items-center justify-center transition duration-300">
+                                    <span class="mr-1">📅</span> Schedule
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Load More -->
+                <div class="flex justify-center mt-8">
+                    <button class="bg-white text-purple-700 border border-purple-300 py-2 px-6 rounded-full shadow-sm hover:bg-purple-50 transition duration-300">
+                        Show More (8)
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Pending Requests -->
+            <div>
+                <h2 class="text-xl font-bold text-purple-700 mb-6">Pending Requests</h2>
+                
+                <div class="bg-white rounded-2xl shadow-soft overflow-hidden">
+                    <!-- Request 1 -->
+                    <div class="p-4 border-b border-gray-100 request-card hover:bg-gray-50">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <img src="https://images.unsplash.com/photo-1529429617124-95b109e86bb8?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                     alt="User" class="w-12 h-12 rounded-full border border-skyblue">
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-purple-700">Jake & Buddy</h3>
+                                    <p class="text-sm text-gray-600">Labrador • 3 yrs • 1.5 miles away</p>
+                                    <p class="text-xs text-gray-500 mt-1">Sent request 2 hours ago</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 max-w-md mb-3">
+                                    Hey! Buddy and I would love to connect with you and Max. We go to Central Park often and would love to arrange a playdate!
+                                </p>
+                                <div class="flex space-x-3">
+                                    <button class="bg-softpink hover:bg-pink-400 text-white px-5 py-2 rounded-full text-sm transition duration-300">
+                                        Accept
+                                    </button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-full text-sm transition duration-300">
+                                        Decline
+                                    </button>
+                                    <button class="bg-white border border-gray-200 text-gray-600 px-5 py-2 rounded-full text-sm hover:bg-gray-50 transition duration-300">
+                                        View Profile
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Request 2 -->
+                    <div class="p-4 border-b border-gray-100 request-card hover:bg-gray-50">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                     alt="User" class="w-12 h-12 rounded-full border border-softpink">
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-purple-700">David & Whiskers</h3>
+                                    <p class="text-sm text-gray-600">Tabby Cat • 3 yrs • 3.1 miles away</p>
+                                    <p class="text-xs text-gray-500 mt-1">Sent request 1 day ago</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 max-w-md mb-3">
+                                    Hi Emma! I noticed Max is good with cats. Whiskers is very social for a cat and would love to make a dog friend. Would you be interested in connecting?
+                                </p>
+                                <div class="flex space-x-3">
+                                    <button class="bg-softpink hover:bg-pink-400 text-white px-5 py-2 rounded-full text-sm transition duration-300">
+                                        Accept
+                                    </button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-full text-sm transition duration-300">
+                                        Decline
+                                    </button>
+                                    <button class="bg-white border border-gray-200 text-gray-600 px-5 py-2 rounded-full text-sm hover:bg-gray-50 transition duration-300">
+                                        View Profile
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Request 3 -->
+                    <div class="p-4 request-card hover:bg-gray-50">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <img src="https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                     alt="User" class="w-12 h-12 rounded-full border border-mintgreen">
+                                <div class="ml-4">
+                                    <h3 class="font-semibold text-purple-700">Jessica & Lucy</h3>
+                                    <p class="text-sm text-gray-600">Beagle • 5 yrs • 4.7 miles away</p>
+                                    <p class="text-xs text-gray-500 mt-1">Sent request 2 days ago</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 max-w-md mb-3">
+                                    Hello! Lucy and I just moved to the area and are looking to make new friends. She's very friendly and loves golden retrievers!
+                                </p>
+                                <div class="flex space-x-3">
+                                    <button class="bg-softpink hover:bg-pink-400 text-white px-5 py-2 rounded-full text-sm transition duration-300">
+                                        Accept
+                                    </button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2 rounded-full text-sm transition duration-300">
+                                        Decline
+                                    </button>
+                                    <button class="bg-white border border-gray-200 text-gray-600 px-5 py-2 rounded-full text-sm hover:bg-gray-50 transition duration-300">
+                                        View Profile
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Match-Me Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FFF6E9',
+                        softpink: '#FFCAD4',
+                        skyblue: '#A0D2EB',
+                        mintgreen: '#C7F0DB',
+                        lavender: '#E0C3FC'
+                    },
+                    fontFamily: {
+                        nunito: ['Nunito', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #FFF6E9;
+        }
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+        .nav-item:hover {
+            transform: translateY(-2px);
+        }
+        .chat-item {
+            transition: all 0.2s ease;
+        }
+        .chat-item:hover {
+            background-color: #F9F9F9;
+            transform: translateX(5px);
+        }
+        .unread-indicator {
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-cream min-h-screen">
+    <div class="flex">
+        <!-- Sidebar Navigation (Same as previous pages) -->
+        <div class="w-64 bg-white h-screen shadow-soft fixed">
+            <div class="p-4 flex justify-center">
+                <img src="https://images.unsplash.com/photo-1560807707-8cc77767d783?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&h=100&q=80" 
+                     alt="Match-Me Logo" class="h-16 w-16 rounded-full border-2 border-softpink">
+            </div>
+            <div class="px-4 py-2">
+                <div class="bg-lavender bg-opacity-30 rounded-xl p-3 flex items-center space-x-3 mb-6">
+                    <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                         alt="User Avatar" class="h-10 w-10 rounded-full border-2 border-white">
+                    <div>
+                        <p class="text-sm font-semibold text-purple-700">Emma & Max</p>
+                        <p class="text-xs text-gray-500">Golden Retriever</p>
+                    </div>
+                </div>
+                
+                <nav class="space-y-2">
+                    <a href="dashboard.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">🏠</span>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                    <a href="my_profile.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">👤</span>
+                        <span class="font-medium">My Profile</span>
+                    </a>
+                    <a href="discover.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">🔍</span>
+                        <span class="font-medium">Discover</span>
+                    </a>
+                    <a href="messages.html" class="nav-item flex items-center space-x-3 bg-softpink bg-opacity-30 text-pink-700 p-3 rounded-xl">
+                        <span class="text-lg">💬</span>
+                        <span class="font-medium">Messages</span>
+                        <span class="bg-softpink text-white text-xs rounded-full px-2 py-1 ml-auto">3</span>
+                    </a>
+                    <a href="connections.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">👥</span>
+                        <span class="font-medium">Connections</span>
+                    </a>
+                    <a href="settings.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                        <span class="text-lg">⚙️</span>
+                        <span class="font-medium">Settings</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="absolute bottom-4 w-full px-4">
+                <a href="login.html" class="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700">
+                    <span class="text-lg">🚪</span>
+                    <span class="font-medium">Logout</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="ml-64 flex-1">
+            <div class="grid grid-cols-3 h-screen">
+                <!-- Conversation List -->
+                <div class="col-span-1 bg-white border-r border-gray-100">
+                    <div class="p-4 border-b border-gray-100">
+                        <h1 class="text-xl font-bold text-purple-700 mb-4">Messages</h1>
+                        <div class="relative">
+                            <input type="text" placeholder="Search conversations..." 
+                                   class="w-full bg-gray-100 rounded-full py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-softpink">
+                            <span class="absolute left-3 top-2 text-gray-400">🔍</span>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-y-auto" style="height: calc(100vh - 89px);">
+                        <!-- Conversation Item 1 (Active) -->
+                        <div class="chat-item p-4 bg-lavender bg-opacity-10 border-l-4 border-softpink">
+                            <div class="flex items-start">
+                                <div class="relative">
+                                    <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="User" class="w-12 h-12 rounded-full border border-gray-200">
+                                    <div class="absolute -right-1 -bottom-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="font-semibold text-purple-700">Mike & Rex</h3>
+                                        <span class="text-xs text-gray-500">2m ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1 truncate">
+                                        Hey! Would you like to meet up at the dog park this weekend? Rex has been...
+                                    </p>
+                                    <div class="flex justify-between items-center mt-2">
+                                        <span class="text-xs text-gray-500">German Shepherd • 4 yrs</span>
+                                        <span class="unread-indicator text-xs bg-softpink text-white px-2 py-0.5 rounded-full">🐾 New</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversation Item 2 (Unread) -->
+                        <div class="chat-item p-4 hover:bg-gray-50">
+                            <div class="flex items-start">
+                                <div class="relative">
+                                    <img src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="User" class="w-12 h-12 rounded-full border border-gray-200">
+                                    <div class="absolute -right-1 -bottom-1 w-4 h-4 bg-gray-300 border-2 border-white rounded-full"></div>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="font-semibold text-gray-700">Lisa & Mittens</h3>
+                                        <span class="text-xs text-gray-500">1h ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1 truncate">
+                                        Mittens really enjoyed meeting Max last week! We should arrange another...
+                                    </p>
+                                    <div class="flex justify-between items-center mt-2">
+                                        <span class="text-xs text-gray-500">Persian Cat • 2 yrs</span>
+                                        <span class="unread-indicator text-xs bg-softpink text-white px-2 py-0.5 rounded-full">🐾 New</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversation Item 3 (Unread) -->
+                        <div class="chat-item p-4 hover:bg-gray-50">
+                            <div class="flex items-start">
+                                <div class="relative">
+                                    <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="User" class="w-12 h-12 rounded-full border border-gray-200">
+                                    <div class="absolute -right-1 -bottom-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="font-semibold text-gray-700">Alex & Coco</h3>
+                                        <span class="text-xs text-gray-500">3h ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1 truncate">
+                                        Do you know any good groomers for corgis? Coco needs a trim and...
+                                    </p>
+                                    <div class="flex justify-between items-center mt-2">
+                                        <span class="text-xs text-gray-500">Corgi • 1 yr</span>
+                                        <span class="unread-indicator text-xs bg-softpink text-white px-2 py-0.5 rounded-full">🐾 New</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversation Item 4 -->
+                        <div class="chat-item p-4 hover:bg-gray-50">
+                            <div class="flex items-start">
+                                <div class="relative">
+                                    <img src="https://images.unsplash.com/photo-1517423440428-a5a00ad493e8?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="User" class="w-12 h-12 rounded-full border border-gray-200">
+                                    <div class="absolute -right-1 -bottom-1 w-4 h-4 bg-gray-300 border-2 border-white rounded-full"></div>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="font-semibold text-gray-700">Sarah & Whiskers</h3>
+                                        <span class="text-xs text-gray-500">Yesterday</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1 truncate">
+                                        That pet-friendly cafe we went to was amazing! Thanks for the recommendation.
+                                    </p>
+                                    <div class="flex justify-between items-center mt-2">
+                                        <span class="text-xs text-gray-500">Tabby Cat • 3 yrs</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversation Item 5 -->
+                        <div class="chat-item p-4 hover:bg-gray-50">
+                            <div class="flex items-start">
+                                <div class="relative">
+                                    <img src="https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="User" class="w-12 h-12 rounded-full border border-gray-200">
+                                    <div class="absolute -right-1 -bottom-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="font-semibold text-gray-700">Jake & Buddy</h3>
+                                        <span class="text-xs text-gray-500">Yesterday</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1 truncate">
+                                        I'm looking forward to our pet playdate next weekend! Buddy is excited too.
+                                    </p>
+                                    <div class="flex justify-between items-center mt-2">
+                                        <span class="text-xs text-gray-500">Labrador • 2 yrs</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversation Item 6 -->
+                        <div class="chat-item p-4 hover:bg-gray-50">
+                            <div class="flex items-start">
+                                <div class="relative">
+                                    <img src="https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="User" class="w-12 h-12 rounded-full border border-gray-200">
+                                    <div class="absolute -right-1 -bottom-1 w-4 h-4 bg-gray-300 border-2 border-white rounded-full"></div>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="font-semibold text-gray-700">Jessica & Lucy</h3>
+                                        <span class="text-xs text-gray-500">2 days ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1 truncate">
+                                        Have you tried that new all-natural dog food brand? Lucy seems to really like it.
+                                    </p>
+                                    <div class="flex justify-between items-center mt-2">
+                                        <span class="text-xs text-gray-500">Beagle • 5 yrs</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Conversation Item 7 -->
+                        <div class="chat-item p-4 hover:bg-gray-50">
+                            <div class="flex items-start">
+                                <div class="relative">
+                                    <img src="https://images.unsplash.com/photo-1596854407944-bf87f6fdd49e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                         alt="User" class="w-12 h-12 rounded-full border border-gray-200">
+                                    <div class="absolute -right-1 -bottom-1 w-4 h-4 bg-gray-300 border-2 border-white rounded-full"></div>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <div class="flex justify-between items-center">
+                                        <h3 class="font-semibold text-gray-700">Sam & Buddy</h3>
+                                        <span class="text-xs text-gray-500">3 days ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1 truncate">
+                                        Hey! Just wanted to share these adorable photos from our last meet-up.
+                                    </p>
+                                    <div class="flex justify-between items-center mt-2">
+                                        <span class="text-xs text-gray-500">Labrador • 2 yrs</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chat Display - Current Conversation -->
+                <div class="col-span-2 flex flex-col h-screen bg-cream">
+                    <!-- Chat Header -->
+                    <div class="bg-white p-4 border-b border-gray-100 flex items-center">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                 alt="User" class="w-12 h-12 rounded-full border border-gray-200">
+                            <div class="absolute -right-1 -bottom-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="font-semibold text-purple-700">Mike & Rex</h3>
+                            <p class="text-xs text-green-600">Online now</p>
+                        </div>
+                        <div class="ml-auto flex space-x-2">
+                            <button class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition duration-200">
+                                <span class="text-gray-600">📞</span>
+                            </button>
+                            <button class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition duration-200">
+                                <span class="text-gray-600">📷</span>
+                            </button>
+                            <button class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition duration-200">
+                                <span class="text-gray-600">ℹ️</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Messages -->
+                    <div class="flex-1 p-4 overflow-y-auto bg-cream bg-opacity-60">
+                        <!-- Date Divider -->
+                        <div class="flex justify-center mb-4">
+                            <span class="text-xs bg-lavender bg-opacity-30 text-purple-700 rounded-full px-3 py-1">Today</span>
+                        </div>
+                        
+                        <!-- Message - Received -->
+                        <div class="flex mb-4">
+                            <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                 alt="User" class="w-8 h-8 rounded-full self-end">
+                            <div class="ml-2 max-w-xs">
+                                <div class="bg-white rounded-t-2xl rounded-r-2xl py-2 px-4 shadow-sm">
+                                    <p class="text-gray-700">Hi Emma! How's Max doing?</p>
+                                </div>
+                                <div class="flex items-center mt-1">
+                                    <span class="text-xs text-gray-500">10:32 AM</span>
+                                    <span class="text-xs ml-1">🐾</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Message - Sent -->
+                        <div class="flex justify-end mb-4">
+                            <div class="mr-2 max-w-xs">
+                                <div class="bg-softpink rounded-t-2xl rounded-l-2xl py-2 px-4 shadow-sm">
+                                    <p class="text-white">Hey Mike! Max is doing great, thanks for asking! He's been really energetic lately.</p>
+                                </div>
+                                <div class="flex items-center justify-end mt-1">
+                                    <span class="text-xs text-gray-500">10:35 AM</span>
+                                    <span class="text-xs ml-1">🐾</span>
+                                </div>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                 alt="User" class="w-8 h-8 rounded-full self-end">
+                        </div>
+                        
+                        <!-- Message - Received -->
+                        <div class="flex mb-4">
+                            <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                 alt="User" class="w-8 h-8 rounded-full self-end">
+                            <div class="ml-2 max-w-xs">
+                                <div class="bg-white rounded-t-2xl rounded-r-2xl py-2 px-4 shadow-sm">
+                                    <p class="text-gray-700">That's awesome! Rex has been pretty active too. Would you like to meet up at the dog park this weekend? Rex has been eager to make new friends.</p>
+                                </div>
+                                <div class="flex items-center mt-1">
+                                    <span class="text-xs text-gray-500">10:40 AM</span>
+                                    <span class="text-xs ml-1">🐾</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Message - Received (With Image) -->
+                        <div class="flex mb-4">
+                            <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                 alt="User" class="w-8 h-8 rounded-full self-end">
+                            <div class="ml-2 max-w-xs">
+                                <div class="bg-white rounded-t-2xl rounded-r-2xl py-2 px-4 shadow-sm">
+                                    <img src="https://images.unsplash.com/photo-1583511655826-05700442976e?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=200&q=80" 
+                                         alt="Dog photo" class="w-full h-auto rounded-xl mb-2">
+                                    <p class="text-gray-700">Here's Rex at the park last weekend. He loves the open space!</p>
+                                </div>
+                                <div class="flex items-center mt-1">
+                                    <span class="text-xs text-gray-500">10:42 AM</span>
+                                    <span class="text-xs ml-1">🐾</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Message - Sent -->
+                        <div class="flex justify-end mb-4">
+                            <div class="mr-2 max-w-xs">
+                                <div class="bg-softpink rounded-t-2xl rounded-l-2xl py-2 px-4 shadow-sm">
+                                    <p class="text-white">He's so handsome! Max would definitely enjoy playing with him. This weekend sounds great! How about Saturday morning at Central Park Dog Run?</p>
+                                </div>
+                                <div class="flex items-center justify-end mt-1">
+                                    <span class="text-xs text-gray-500">10:45 AM</span>
+                                    <span class="text-xs ml-1">🐾</span>
+                                </div>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                 alt="User" class="w-8 h-8 rounded-full self-end">
+                        </div>
+                        
+                        <!-- Message - Sent (With Image) -->
+                        <div class="flex justify-end mb-4">
+                            <div class="mr-2 max-w-xs">
+                                <div class="bg-softpink rounded-t-2xl rounded-l-2xl py-2 px-4 shadow-sm">
+                                    <img src="https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=200&q=80" 
+                                         alt="Dog photo" class="w-full h-auto rounded-xl mb-2">
+                                    <p class="text-white">Here's Max with his favorite toy! He never goes to the park without it.</p>
+                                </div>
+                                <div class="flex items-center justify-end mt-1">
+                                    <span class="text-xs text-gray-500">10:47 AM</span>
+                                    <span class="text-xs ml-1">🐾</span>
+                                </div>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                 alt="User" class="w-8 h-8 rounded-full self-end">
+                        </div>
+                        
+                        <!-- Message - Received -->
+                        <div class="flex mb-1">
+                            <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                 alt="User" class="w-8 h-8 rounded-full self-end">
+                            <div class="ml-2 max-w-xs">
+                                <div class="bg-white rounded-t-2xl rounded-r-2xl py-2 px-4 shadow-sm">
+                                    <p class="text-gray-700">Great! Saturday morning works perfectly. Shall we say around 9 AM at Central Park? Rex is an early bird!</p>
+                                </div>
+                                <div class="flex items-center mt-1">
+                                    <span class="text-xs text-gray-500">10:50 AM</span>
+                                    <span class="text-xs ml-1">🐾</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Typing Indicator -->
+                        <div class="flex mb-4">
+                            <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80" 
+                                 alt="User" class="w-8 h-8 rounded-full self-end">
+                            <div class="ml-2">
+                                <div class="bg-white rounded-full py-1 px-4 shadow-sm flex items-center space-x-1">
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-75"></div>
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Input -->
+                    <div class="p-4 bg-white border-t border-gray-100">
+                        <div class="flex items-center">
+                            <button class="text-gray-500 hover:text-gray-700 mr-2">
+                                <span class="text-xl">📸</span>
+                            </button>
+                            <button class="text-gray-500 hover:text-gray-700 mr-2">
+                                <span class="text-xl">😊</span>
+                            </button>
+                            <div class="flex-1 bg-gray-100 rounded-full px-4 py-2 flex items-center">
+                                <input type="text" placeholder="Type your message..." class="bg-transparent w-full focus:outline-none">
+                            </div>
+                            <button class="bg-softpink hover:bg-pink-400 text-white p-2 rounded-full ml-2 transition duration-300">
+                                <span class="text-xl">🐾</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

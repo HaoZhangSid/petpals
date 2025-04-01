@@ -1,0 +1,50 @@
+export const mockRecommendations = [
+  {
+    id: "rec-1",
+    ownerId: "user-234",
+    ownerName: "Tom",
+    petId: "pet-345",
+    petName: "Bella",
+    petType: "拉布拉多",
+    age: 3,
+    description: "喜欢游泳和捡球",
+    distance: "1.2 公里",
+    distanceValue: 1.2,
+    image: "https://images.unsplash.com/photo-1583511655826-05700442976e",
+    borderColor: "border-pink-500",
+    matchScore: 92,
+    tags: ["友善", "活跃", "爱玩水"]
+  },
+  {
+    id: "rec-2",
+    ownerId: "user-345",
+    ownerName: "Lisa",
+    petId: "pet-456",
+    petName: "Mittens",
+    petType: "波斯猫",
+    age: 2,
+    description: "顽皮又喜欢撒娇",
+    distance: "0.8 公里",
+    distanceValue: 0.8,
+    image: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6",
+    borderColor: "border-blue-400",
+    matchScore: 85,
+    tags: ["安静", "慵懒", "娇小"]
+  },
+  {
+    id: "rec-3",
+    ownerId: "user-456",
+    ownerName: "Alex",
+    petId: "pet-567",
+    petName: "Coco",
+    petType: "柯基",
+    age: 1,
+    description: "精力充沛又友好",
+    distance: "2.5 公里",
+    distanceValue: 2.5,
+    image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b",
+    borderColor: "border-purple-400",
+    matchScore: 78,
+    tags: ["活跃", "友好", "年轻"]
+  }
+]; 
