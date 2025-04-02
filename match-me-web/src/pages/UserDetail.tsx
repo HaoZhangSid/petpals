@@ -1,16 +1,68 @@
-import { useState, useEffect } from 'react';
-import { useUserStore } from '../store/userStore';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
-import { Pet, User, Activity } from '../types';
-import { useModal } from '../contexts/ModalContext';
-import { mockUserPets } from '../mocks/data/userPets';
+import { Pet, User } from '../types';
 
-const Profile = () => {
-  const { user } = useUserStore();
-  const { openAddPetModal } = useModal();
+const UserDetail = () => {
+  const { userId } = useParams();
+  const [searchParams] = useSearchParams();
+  const [user, setUser] = useState<User | null>(null);
   const [pets, setPets] = useState<Pet[]>([]);
   const [activePet, setActivePet] = useState<Pet | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const petRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // 从URL获取要滚动到的宠物ID
+  const scrollToPetId = searchParams.get('scrollToPet');
+
+  // 设置ref的回调函数
+  const setPetRef = (petId: string) => (el: HTMLDivElement | null) => {
+    petRefs.current[petId] = el;
+  };
+
+  // 默认头像URL，替代via.placeholder.com
+  const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1566034652452-bf7c8946829c?ixlib=rb-1.2.1&auto=format&fit=crop&w=128&h=128&q=80';
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setIsLoading(true);
+        // 获取用户信息
+        const { data: userData } = await api.get<User>(`/api/users/${userId}`);
+        setUser(userData);
+
+        // 获取用户的宠物信息
+        const { data: petsData } = await api.get<Pet[]>(`/api/users/${userId}/pets`);
+        const petsArray = Array.isArray(petsData) ? petsData : [];
+        setPets(petsArray);
+
+        // 如果有scrollToPet参数，设置对应的宠物为active
+        if (scrollToPetId) {
+          const targetPet = petsArray.find(pet => pet.id === scrollToPetId);
+          if (targetPet) {
+            setActivePet(targetPet);
+            // 等待DOM更新后滚动
+            setTimeout(() => {
+              const petElement = petRefs.current[scrollToPetId];
+              if (petElement) {
+                petElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }, 100);
+          }
+        } else if (petsArray.length > 0) {
+          setActivePet(petsArray[0]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (userId) {
+      fetchUserData();
+    }
+  }, [userId, scrollToPetId]);
 
   const getInterestTagColor = (index: number): string => {
     const colors = [
@@ -24,88 +76,6 @@ const Profile = () => {
     ];
     return colors[index % colors.length];
   };
-
-  const getActivityCardColor = (type: Activity['type']): { bgOpacity: string; border: string } => {
-    const colors: Record<Activity['type'], { bgOpacity: string; border: string }> = {
-      match: { bgOpacity: 'bg-green-50', border: 'border-green-200' },
-      playdate: { bgOpacity: 'bg-blue-50', border: 'border-blue-200' },
-      message: { bgOpacity: 'bg-purple-50', border: 'border-purple-200' },
-      like: { bgOpacity: 'bg-pink-50', border: 'border-pink-200' },
-      comment: { bgOpacity: 'bg-yellow-50', border: 'border-yellow-200' },
-      connection_request: { bgOpacity: 'bg-orange-50', border: 'border-orange-200' },
-      connection_accepted: { bgOpacity: 'bg-green-50', border: 'border-green-200' },
-      photo_added: { bgOpacity: 'bg-purple-50', border: 'border-purple-200' },
-      profile_view: { bgOpacity: 'bg-gray-50', border: 'border-gray-200' },
-      playdate_invitation: { bgOpacity: 'bg-blue-50', border: 'border-blue-200' }
-    };
-    return colors[type];
-  };
-
-  const getActivityDetails = (activity: Activity): { icon: string; text: string } => {
-    const details: Record<Activity['type'], { icon: string; text: string }> = {
-      match: { icon: '❤️', text: 'New Match' },
-      playdate: { icon: '🎮', text: 'Playdate Scheduled' },
-      message: { icon: '💬', text: 'New Message' },
-      like: { icon: '👍', text: 'New Like' },
-      comment: { icon: '💭', text: 'New Comment' },
-      connection_request: { icon: '🤝', text: 'Connection Request' },
-      connection_accepted: { icon: '✅', text: 'Connection Accepted' },
-      photo_added: { icon: '📸', text: 'New Photo Added' },
-      profile_view: { icon: '👀', text: 'Profile Viewed' },
-      playdate_invitation: { icon: '📅', text: 'Playdate Invitation' }
-    };
-    return details[activity.type];
-  };
-
-  const bgOpacity = {
-    mintgreen: 'bg-opacity-10',
-    lavender: 'bg-opacity-10',
-    softpink: 'bg-opacity-10',
-    skyblue: 'bg-opacity-10',
-    yellow: 'bg-opacity-10',
-    orange: 'bg-opacity-10',
-    red: 'bg-opacity-10'
-  };
-
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        setIsLoading(true);
-        const { data: petsData } = await api.get<Pet[]>('/users/pets');
-        const petsArray = Array.isArray(petsData) ? petsData : [];
-        
-        // 如果API返回空数组，使用mock数据
-        if (petsArray.length === 0) {
-          console.log('Using mock pet data as API returned empty array');
-          setPets(mockUserPets);
-          if (mockUserPets.length > 0) {
-            setActivePet(mockUserPets[0]);
-          }
-        } else {
-          setPets(petsArray);
-          if (petsArray.length > 0) {
-            setActivePet(petsArray[0]);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch profile data', error);
-        console.log('Using mock pet data due to API error');
-        setPets(mockUserPets);
-        if (mockUserPets.length > 0) {
-          setActivePet(mockUserPets[0]);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchProfileData();
-    } else {
-      setIsLoading(false);
-      console.log("User data not available yet.");
-    }
-  }, [user]);
 
   if (isLoading) {
     return (
@@ -121,8 +91,8 @@ const Profile = () => {
   if (!user) {
     return (
       <div className="flex-1 p-8 text-center">
-        <h1 className="text-xl font-semibold text-gray-700 mb-4">Please Log In</h1>
-        <p className="text-gray-500">You need to be logged in to view your profile.</p>
+        <h1 className="text-xl font-semibold text-gray-700 mb-4">User Not Found</h1>
+        <p className="text-gray-500">The user you're looking for doesn't exist.</p>
       </div>
     );
   }
@@ -130,12 +100,10 @@ const Profile = () => {
   return (
     <div className="flex-1 p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-purple-700">My Profile</h1>
-        <button className="bg-softpink hover:bg-pink-400 text-white px-6 py-2 rounded-full shadow-md transition duration-300">
-          Edit Profile
-        </button>
+        <h1 className="text-2xl font-bold text-purple-700">{user.name}'s Profile</h1>
       </div>
 
+      {/* User Profile Header */}
       <div className="bg-white rounded-2xl overflow-hidden shadow-soft mb-8">
         <div className="h-40 bg-gradient-to-r from-lavender to-skyblue relative">
           <button className="absolute right-4 top-4 bg-white p-2 rounded-full shadow-md text-xl">
@@ -146,7 +114,7 @@ const Profile = () => {
           <div className="flex flex-col sm:flex-row items-end sm:items-start">
             <div className="-mt-16 mb-4 sm:mb-0">
               <img 
-                src={user.avatar || 'https://via.placeholder.com/128'}
+                src={user.avatar || DEFAULT_AVATAR}
                 alt="User Avatar" 
                 className="w-32 h-32 rounded-full border-4 border-white shadow-md bg-gray-200"
               />
@@ -157,7 +125,7 @@ const Profile = () => {
               <div className="flex flex-wrap mt-2 gap-2">
                 <span className={getInterestTagColor(0)}>Pet Parent</span>
                 <span className={getInterestTagColor(1)}>Animal Lover</span>
-                {Array.isArray(pets) && pets.length > 0 && (
+                {pets.length > 0 && (
                   <span className={getInterestTagColor(2)}>
                     {pets.length} {pets.length === 1 ? 'Pet' : 'Pets'}
                   </span>
@@ -168,13 +136,12 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* User Info + Photos Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        {/* Left Column - Personal Info */}
         <div className="lg:col-span-1 bg-white rounded-2xl shadow-soft p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-purple-700">Personal Info</h2>
-            <button className="text-skyblue hover:text-blue-600 text-lg">
-              ✏️
-            </button>
           </div>
           <div className="space-y-4 text-sm">
             <div>
@@ -200,19 +167,17 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* Right Column - About Me */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-soft p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-purple-700">About Me</h2>
-            <button className="text-skyblue hover:text-blue-600 text-lg">
-              ✏️
-            </button>
           </div>
           <p className="text-gray-700 text-sm mb-4">
             {user.bio || 'No bio added yet.'}
           </p>
 
           <div className="mt-6">
-            <h3 className="font-semibold text-gray-700 mb-3">My Interests</h3>
+            <h3 className="font-semibold text-gray-700 mb-3">Interests</h3>
             <div className="flex flex-wrap gap-2">
               {Array.isArray(user.interests) && user.interests.length > 0 ? (
                 user.interests.map((interest, index) => (
@@ -228,14 +193,11 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* New section: User Photos Gallery */}
+      {/* User Photos Gallery - Full Width Section */}
       <div className="bg-white rounded-2xl shadow-soft overflow-hidden mb-8">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-purple-700">My Photos</h2>
-            <button className="text-skyblue hover:text-blue-600 text-lg">
-              ✏️
-            </button>
+            <h2 className="text-xl font-bold text-purple-700">Photos</h2>
           </div>
           
           {Array.isArray(user.photos) && user.photos.length > 0 ? (
@@ -250,10 +212,6 @@ const Profile = () => {
                     />
                   </div>
                 ))}
-                
-                <div className="w-full aspect-square bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 text-2xl hover:bg-gray-200 transition duration-300 cursor-pointer">
-                  +
-                </div>
               </div>
               
               {user.photos.length > 7 && (
@@ -265,17 +223,16 @@ const Profile = () => {
           ) : (
             <div className="py-10 flex flex-col items-center justify-center">
               <div className="text-gray-300 text-5xl mb-4">📷</div>
-              <p className="text-gray-500 text-sm text-center mb-4">Share photos of your life with your pets</p>
-              <button className="px-4 py-1.5 bg-skyblue text-white rounded-full text-sm hover:bg-blue-500 transition">
-                Upload Photos
-              </button>
+              <p className="text-gray-500 text-sm text-center mb-4">No photos added yet</p>
             </div>
           )}
         </div>
       </div>
 
-      <h2 className="text-xl font-bold text-purple-700 mb-4">My Pets</h2>
+      {/* Pets Section Title */}
+      <h2 className="text-xl font-bold text-purple-700 mb-4">Pets</h2>
 
+      {/* Pet Tabs */}
       <div className="flex space-x-4 mb-6 overflow-x-auto pb-2">
         {Array.isArray(pets) && pets.map(pet => (
           <button 
@@ -284,7 +241,7 @@ const Profile = () => {
             className={`pet-tab rounded-xl bg-white p-3 border-2 shadow-sm flex items-center space-x-3 cursor-pointer flex-shrink-0 transition duration-150 ease-in-out ${activePet?.id === pet.id ? 'border-softpink' : 'border-gray-100 hover:border-gray-300'}`}
           >
             <img 
-              src={pet.avatar || 'https://via.placeholder.com/48'}
+              src={pet.avatar || DEFAULT_AVATAR}
               alt={pet.name} 
               className={`w-12 h-12 rounded-full border-2 bg-gray-200 ${activePet?.id === pet.id ? 'border-softpink' : 'border-transparent'}`}
             />
@@ -294,10 +251,6 @@ const Profile = () => {
             </div>
           </button>
         ))}
-        <button className="pet-tab rounded-xl bg-white p-3 border-2 border-dashed border-gray-300 shadow-sm flex items-center justify-center space-x-2 cursor-pointer hover:bg-gray-50 hover:border-gray-400 flex-shrink-0 w-40 transition duration-150 ease-in-out" onClick={openAddPetModal}>
-          <span className="text-xl text-gray-400">+</span>
-          <span className="font-medium text-sm text-gray-500">Add New Pet</span>
-        </button>
       </div>
 
       {activePet ? (
@@ -307,13 +260,10 @@ const Profile = () => {
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-purple-700">{activePet.name}'s Profile</h2>
-                  <button className="text-skyblue hover:text-blue-600 text-lg">
-                    ✏️
-                  </button>
                 </div>
                 <div className="text-center mb-6">
                   <img 
-                    src={activePet.avatar || 'https://via.placeholder.com/128'} 
+                    src={activePet.avatar || DEFAULT_AVATAR} 
                     alt={activePet.name} 
                     className="w-32 h-32 rounded-full mx-auto mb-3 border-4 border-softpink bg-gray-200"
                   />
@@ -368,36 +318,23 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Favorite Activities section - redesigned for better balance */}
+            {/* Favorite Activities section */}
             <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-purple-700">Favorite Activities</h2>
-                  <button className="text-skyblue hover:text-blue-600 text-lg">
-                    ✏️
-                  </button>
                 </div>
                 
                 {activePet.favoriteActivities && activePet.favoriteActivities.length > 0 ? (
                   <div className="space-y-3">
-                    {activePet.favoriteActivities.slice(0, 3).map((activity, index) => {
-                      const colorInfo = getActivityCardColor('playdate');
-                      const activityDetails = getActivityDetails({
-                        id: `activity-${index}`,
-                        type: 'playdate',
-                        actor: user,
-                        createdAt: new Date().toISOString(),
-                        read: false
-                      });
-                      return (
-                        <div key={index} className={`${colorInfo.bgOpacity} rounded-xl p-3 border ${colorInfo.border} flex items-center`}>
-                          <span className="text-2xl mr-3">{activityDetails.icon}</span>
-                          <div>
-                            <h3 className="font-bold text-gray-800 text-sm">{activity}</h3>
-                          </div>
+                    {activePet.favoriteActivities.slice(0, 3).map((activity, index) => (
+                      <div key={index} className="bg-blue-50 rounded-xl p-3 border border-blue-200 flex items-center">
+                        <span className="text-2xl mr-3">🎮</span>
+                        <div>
+                          <h3 className="font-bold text-gray-800 text-sm">{activity}</h3>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                     
                     {activePet.favoriteActivities.length > 3 && (
                       <button className="w-full text-center py-2 text-sm text-skyblue hover:text-blue-600 transition">
@@ -409,9 +346,6 @@ const Profile = () => {
                   <div className="py-10 flex flex-col items-center justify-center">
                     <div className="text-gray-300 text-5xl mb-4">🐾</div>
                     <p className="text-gray-500 text-sm text-center mb-4">No activities added yet</p>
-                    <button className="px-4 py-1.5 bg-softpink text-white rounded-full text-sm hover:bg-pink-400 transition">
-                      Add Activities
-                    </button>
                   </div>
                 )}
               </div>
@@ -422,9 +356,6 @@ const Profile = () => {
             <div className="bg-white rounded-2xl shadow-soft p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-purple-700">About {activePet.name}</h2>
-                <button className="text-skyblue hover:text-blue-600 text-lg">
-                  ✏️
-                </button>
               </div>
               {activePet.bio ? (
                 <p className="text-gray-700 text-sm">
@@ -433,21 +364,15 @@ const Profile = () => {
               ) : (
                 <div className="py-4 flex flex-col items-center justify-center">
                   <p className="text-gray-500 text-sm text-center mb-3">No bio added yet for this pet.</p>
-                  <button className="px-4 py-1.5 bg-lavender bg-opacity-10 text-purple-700 rounded-full text-xs hover:bg-opacity-25 transition">
-                    + Add Bio
-                  </button>
                 </div>
               )}
             </div>
 
-            {/* Photo Gallery section - redesigned for better balance */}
+            {/* Photo Gallery section */}
             <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-purple-700">{activePet.name}'s Photos</h2>
-                  <button className="text-skyblue hover:text-blue-600 text-lg">
-                    ✏️
-                  </button>
                 </div>
                 
                 {Array.isArray(activePet.photos) && activePet.photos.length > 0 ? (
@@ -462,10 +387,6 @@ const Profile = () => {
                           />
                         </div>
                       ))}
-                      
-                      <div className="w-full aspect-square bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 text-2xl hover:bg-gray-200 transition duration-300 cursor-pointer">
-                        +
-                      </div>
                     </div>
                     
                     {activePet.photos.length > 5 && (
@@ -478,9 +399,6 @@ const Profile = () => {
                   <div className="py-10 flex flex-col items-center justify-center">
                     <div className="text-gray-300 text-5xl mb-4">📷</div>
                     <p className="text-gray-500 text-sm text-center mb-4">No photos added yet</p>
-                    <button className="px-4 py-1.5 bg-skyblue text-white rounded-full text-sm hover:bg-blue-500 transition">
-                      Upload Photos
-                    </button>
                   </div>
                 )}
               </div>
@@ -489,56 +407,11 @@ const Profile = () => {
         </div>
       ) : (
         <div className="bg-white p-6 rounded-2xl shadow-soft border border-gray-100 text-center">
-          <p className="text-gray-600 mb-4">You haven't added any pets yet.</p>
-          <button 
-            className="px-4 py-2 bg-softpink text-white rounded-xl hover:bg-pink-400 transition"
-            onClick={openAddPetModal}
-          >
-            Add Your First Pet
-          </button>
+          <p className="text-gray-600 mb-4">No pets added yet.</p>
         </div>
       )}
     </div>
   );
 };
 
-const interestColors = [
-  'bg-mintgreen text-green-700',
-  'bg-skyblue text-blue-700',
-  'bg-softpink text-pink-700',
-  'bg-lavender text-purple-700',
-  'bg-yellow-100 text-yellow-700',
-  'bg-gray-100 text-gray-700',
-  'bg-red-100 text-red-700',
-];
-
-const getInterestTagColor = (index: number): string => {
-  return interestColors[index % interestColors.length];
-}
-
-// Helper function for activity card colors and icons/descriptions
-const activityCardColors = [
-  { bgOpacity: 'bg-mintgreen bg-opacity-10', border: 'border-mintgreen' },
-  { bgOpacity: 'bg-skyblue bg-opacity-10', border: 'border-skyblue' },
-  { bgOpacity: 'bg-softpink bg-opacity-10', border: 'border-softpink' },
-  { bgOpacity: 'bg-lavender bg-opacity-10', border: 'border-lavender' },
-];
-
-const getActivityCardColor = (index: number) => {
-  return activityCardColors[index % activityCardColors.length];
-}
-
-// Basic mapping for activity details (can be expanded)
-const activityDetailsMap: { [key: string]: { icon: string; description: string } } = {
-  'Beach Outings': { icon: '🏖️', description: 'Loves playing in the waves and digging in the sand.' },
-  'Fetch': { icon: '🎾', description: 'Could play fetch for hours! Favorite toy is a tennis ball.' },
-  'Hiking': { icon: '🥾', description: 'Enjoys exploring trails and taking in nature smells.' },
-  'Dog Park': { icon: '🐕', description: 'Socializing with other dogs is a favorite pastime!' },
-  // Add more activities as needed
-};
-
-const getActivityDetails = (activityName: string) => {
-  return activityDetailsMap[activityName] || { icon: '🐾', description: `Enjoys ${activityName}.` }; // Default fallback
-}
-
-export default Profile; 
+export default UserDetail; 

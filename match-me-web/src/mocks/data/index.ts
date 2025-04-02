@@ -1,16 +1,20 @@
-import { mockPets } from './pets';
-import { mockStats } from './stats';
-import { mockPlaydates } from './playdates';
-import { mockRecommendations } from './recommendations';
-import { mockActivities } from './activities';
-import { mockMessages, mockChatMessages } from './messages';
+import './pets';
+import './stats';
+import './playdates';
+import './recommendations';
+import './activities';
+import './messages';
+import './discover';
 
-export {
-  mockPets,
-  mockStats,
-  mockPlaydates,
-  mockRecommendations,
-  mockActivities,
-  mockMessages,
-  mockChatMessages
-}; 
+export * from './pets';
+export * from './stats';
+export * from './activities';
+export * from './recommendations';
+export * from './playdates';
+export * from './messages';
+export * from './connections';
+export * from './discover';
+export * from './user';
+export * from './userPets';
+export * from './userStats';
+// export * from './conversations'; 

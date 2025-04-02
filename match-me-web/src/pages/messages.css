@@ -1,0 +1,199 @@
+/* Message styles */
+.chat-item {
+  transition: all 0.3s ease;
+}
+
+.chat-item:hover {
+  background-color: #F9F9F9;
+  transform: translateX(5px);
+}
+
+.unread-indicator {
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* Animate message bubbles */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Typing indicator animation */
+.animate-bounce {
+  animation: bounce 1.4s infinite;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+/* Custom colors */
+.bg-cream {
+  background-color: #FFF6E9;
+}
+
+.bg-softpink {
+  background-color: #FFCAD4;
+}
+
+.bg-skyblue {
+  background-color: #A0D2EB;
+}
+
+.bg-mintgreen {
+  background-color: #C7F0DB;
+}
+
+.bg-lavender {
+  background-color: #E0C3FC;
+}
+
+/* Hide scrollbar but keep functionality */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  border: 2px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Message box shadows */
+.shadow-soft {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+}
+
+/* Custom transitions */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-shadow {
+  transition-property: box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Image hover effects */
+.hover\:opacity-90:hover {
+  opacity: 0.9;
+}
+
+/* New message highlight effect */
+@keyframes highlight {
+  0% {
+    background-color: rgba(224, 195, 252, 0.2);
+  }
+  50% {
+    background-color: rgba(224, 195, 252, 0.4);
+  }
+  100% {
+    background-color: rgba(224, 195, 252, 0.2);
+  }
+}
+
+/* Add custom scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d8b4fe;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #c084fc;
+}
+
+/* For Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d8b4fe #f1f1f1;
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ensure the main container doesn't overflow */
+.messages-container {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Ensure chat areas don't overflow */
+.conversation-list-container, 
+.chat-display-container {
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Additional utility classes */
+.delay-150 {
+  animation-delay: 150ms;
+}
+
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+/* Text handling for messages */
+.break-words {
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.message-text {
+  max-width: 100%;
+  text-overflow: ellipsis;
+  overflow-wrap: break-word;
+} 

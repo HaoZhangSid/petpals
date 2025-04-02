@@ -2,7 +2,8 @@ import { JSX, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useUserStore } from './store/userStore';
 import './App.css';
-// // 导入页面组件（稍后创建）
+
+// Page components
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -12,17 +13,18 @@ import Messages from './pages/Messages';
 import Connections from './pages/Connections';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
+import UserDetail from './pages/UserDetail';
 
-// 导入布局组件（稍后创建）
+// Layout component
 import MainLayout from './components/layout/MainLayout';
 
-// 受保护的路由组件
-const ENABLE_AUTH = false; // 设置为 false 来临时取消认证
+// Protected route component
+const ENABLE_AUTH = true; // Re-enable auth check if needed
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const isAuthenticated = useUserStore(state => state.isAuthenticated);
+  const token = useUserStore(state => state.token); // Check for token instead
 
-  if (ENABLE_AUTH && !isAuthenticated) {
+  if (ENABLE_AUTH && !token) { // Redirect if auth enabled and no token
     return <Navigate to="/login" replace />;
   }
 
@@ -31,40 +33,44 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 
 
 function App() {
-  // Use separate selectors to avoid creating new objects
-  const isAuthenticated = useUserStore(state => state.isAuthenticated);
+  // Get necessary state and actions from the store
+  const token = useUserStore(state => state.token);
   const user = useUserStore(state => state.user);
-  const fetchUser = useUserStore(state => state.fetchProfile);
+  const fetchUserProfile = useUserStore(state => state.fetchUserProfile); // Use the correct fetch function
 
   useEffect(() => {
-    // 如果有token但没有用户信息，尝试获取用户信息
-    if (isAuthenticated && !user) {
-      fetchUser();
+    // If a token exists but user data is not loaded, fetch the profile
+    if (token && !user) {
+      fetchUserProfile();
     }
-  }, [isAuthenticated, user, fetchUser]);
+    // No need to fetch if no token exists
+  }, [token, user, fetchUserProfile]); // Depend on token, user, and the fetch function
 
   return (
     <Router>
       <Routes>
-        {/* 公开路由 */}
+        {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {/* 受保护的路由 */}
+        {/* Protected routes */}
         <Route path="/" element={
           <ProtectedRoute>
             <MainLayout />
           </ProtectedRoute>
         }>
-          <Route index element={<Dashboard />} />
+          {/* Define nested routes within MainLayout */}
+          <Route index element={<Dashboard />} /> {/* Dashboard at root */}
           <Route path="profile" element={<Profile />} />
           <Route path="discover" element={<Discover />} />
           <Route path="messages" element={<Messages />} />
           <Route path="connections" element={<Connections />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="users/:userId" element={<UserDetail />} />
+          {/* Add other nested routes here */}
         </Route>
         
-        {/* 404页面 */}
+        {/* 404 Page */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
