@@ -4,6 +4,7 @@ import './index.css'
 import App from './App'
 import { worker } from './mocks/browser'
 import { ModalProvider } from './contexts/ModalContext'
+import { initializeAuth } from './store/userStore'
 
 async function startApp() {
   // 只在开发环境中启动 mock 服务
@@ -15,6 +16,9 @@ async function startApp() {
     })
     console.log('🔶 Mock Service Worker 已激活')
   }
+  
+  // Initialize authentication state before rendering the app
+  initializeAuth();
 
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>

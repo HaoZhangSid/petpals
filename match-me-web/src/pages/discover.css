@@ -13,25 +13,3 @@
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
-
-/* Colors */
-.bg-cream { background-color: #FFF6E9; }
-.bg-softpink { background-color: #FFCAD4; }
-.bg-skyblue { background-color: #A0D2EB; }
-.bg-mintgreen { background-color: #C7F0DB; }
-.bg-lavender { background-color: #E0C3FC; }
-
-.border-softpink { border-color: #FFCAD4; }
-.border-skyblue { border-color: #A0D2EB; }
-.border-mintgreen { border-color: #C7F0DB; }
-.border-lavender { border-color: #E0C3FC; }
-
-.text-softpink { color: #FFCAD4; }
-.text-skyblue { color: #A0D2EB; }
-.text-mintgreen { color: #C7F0DB; }
-.text-lavender { color: #E0C3FC; }
-
-/* Shadow */
-.shadow-soft {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-} 

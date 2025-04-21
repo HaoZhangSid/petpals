@@ -5,15 +5,15 @@ export const mockRecommendations = [
     ownerName: "Tom",
     petId: "pet-345",
     petName: "Bella",
-    petType: "拉布拉多",
+    petType: "Labrador",
     age: 3,
-    description: "喜欢游泳和捡球",
-    distance: "1.2 公里",
+    description: "Loves swimming and fetching balls",
+    distance: "1.2 km",
     distanceValue: 1.2,
     image: "https://images.unsplash.com/photo-1583511655826-05700442976e",
     borderColor: "border-pink-500",
     matchScore: 92,
-    tags: ["友善", "活跃", "爱玩水"]
+    tags: ["Friendly", "Active", "Loves water"]
   },
   {
     id: "rec-2",
@@ -21,15 +21,15 @@ export const mockRecommendations = [
     ownerName: "Lisa",
     petId: "pet-456",
     petName: "Mittens",
-    petType: "波斯猫",
+    petType: "Persian Cat",
     age: 2,
-    description: "顽皮又喜欢撒娇",
-    distance: "0.8 公里",
+    description: "Playful and loves to cuddle",
+    distance: "0.8 km",
     distanceValue: 0.8,
     image: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6",
     borderColor: "border-blue-400",
     matchScore: 85,
-    tags: ["安静", "慵懒", "娇小"]
+    tags: ["Quiet", "Lazy", "Petite"]
   },
   {
     id: "rec-3",
@@ -37,14 +37,14 @@ export const mockRecommendations = [
     ownerName: "Alex",
     petId: "pet-567",
     petName: "Coco",
-    petType: "柯基",
+    petType: "Corgi",
     age: 1,
-    description: "精力充沛又友好",
-    distance: "2.5 公里",
+    description: "Energetic and friendly",
+    distance: "2.5 km",
     distanceValue: 2.5,
     image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b",
     borderColor: "border-purple-400",
     matchScore: 78,
-    tags: ["活跃", "友好", "年轻"]
+    tags: ["Active", "Friendly", "Young"]
   }
-]; 
+];

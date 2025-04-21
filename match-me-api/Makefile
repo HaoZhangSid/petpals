@@ -3,7 +3,7 @@
 # 应用名称
 APP=match-me-api
 # 主程序入口
-MAIN_PATH=./cmd/api/main.go
+MAIN_PATH=./cmd/server/main.go
 
 # 构建可执行文件
 build:

@@ -60,27 +60,27 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // Prepare data for API (adjust structure based on backend needs)
+      // Prepare data for API (matching backend structure)
       const registrationData = {
-        firstName,
-        lastName,
+        name: `${firstName} ${lastName}`, // Combine first and last name for backend 'name' field
         email,
         password,
-        location
+        // Location is not required by the current backend /auth/register endpoint
       };
 
-      // Make API call to registration endpoint
-      const response = await api.post('/api/auth/register', registrationData);
+      // Make API call to the correct registration endpoint
+      // Use '/auth/register' instead of '/api/auth/register'
+      const response = await api.post('/auth/register', registrationData);
 
-      // Handle success - e.g., show message, redirect to login, or auto-login
-      console.log('Registration successful:', response.data);
-      // Redirect to login with success message
-      navigate('/login?registered=true&addPet=true'); 
-      // The addPet parameter will be used to show a prompt to add pet after login
+      // Handle success - Log, navigate to login page with params
+      console.log('Registration successful:', response.data); // Backend returns { user, token }
+      // Keep the navigation to login page as requested
+      navigate('/login?registered=true&addPet=true');
 
     } catch (err: any) {
       console.error('Registration failed:', err);
-      const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
+      // Extract error message from backend response if available
+      const errorMessage = err.response?.data?.error || 'Registration failed. Please try again.';
       setError(errorMessage);
     } finally {
       setIsLoading(false);

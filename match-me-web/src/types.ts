@@ -11,35 +11,35 @@ export interface User {
   photos?: string[];
   isOnline?: boolean;
   petInfo?: string;
-  pets: Pet[];
+  pets?: Pet[];
 }
 
 export interface Pet {
   id: string;
+  userId: string;
   name: string;
   type: string;
-  breed: string;
-  age: number;
-  avatar: string;
-  personality: string[];
-  bio: string;
-  distance: number;
-  lastActive: string;
-  ownerName: string;
-  ownerId: string;
-  ownerImage: string;
-  activityLevel: 'Very Active' | 'Active' | 'Moderate' | 'Low Energy' | 'Very Calm';
-  playStyle: string[];
-  location: string;
-  gender?: string;
-  weight?: number;
-  birthday?: string;
-  isMicrochipped?: boolean;
-  isVaccinated?: boolean;
-  isNeutered?: boolean;
-  favoriteActivities?: string[];
-  photos?: string[];
-  description?: string;
+  breed?: string | null;
+  age?: number | null;
+  gender?: string | null;
+  weight?: number | null;
+  birthday?: string | null;
+  avatar?: string | null;
+  bio?: string | null;
+  photos?: string[] | null;
+  personality?: string[] | null;
+  activityLevel?: string | null;
+  favoriteActivities?: string[] | null;
+  playStyle?: string[] | null;
+  isMicrochipped?: boolean | null;
+  isVaccinated?: boolean | null;
+  isNeutered?: boolean | null;
+  createdAt: string;
+  updatedAt: string;
+  distance?: number | null;
+  lastActive?: string | null;
+  ownerName?: string | null;
+  ownerImage?: string | null;
 }
 
 export interface Message {
@@ -89,18 +89,23 @@ export interface Activity {
   read: boolean;
 }
 
+export type PlaydateType = 'my_event' | 'invitation' | 'friends_event' | 'public_nearby';
+export type PlaydateFilter = 'all' | PlaydateType;
+export type PlaydateStatus = 'pending' | 'accepted' | 'declined' | 'requested';
+
 export interface Playdate {
   id: string;
   title: string;
-  description: string;
   date: string;
   time: string;
   location: string;
-  participants: User[];
-  pets: Pet[];
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  createdAt: string;
-  updatedAt: string;
+  description?: string;
+  participants?: User[];
+  typeForCurrentUser: PlaydateType;
+  statusForCurrentUser: PlaydateStatus;
+  icon: string;
+  creator: User;
+  allowsJoinRequests?: boolean;
 }
 
 export interface Recommendation {
