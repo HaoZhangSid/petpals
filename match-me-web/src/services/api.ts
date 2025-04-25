@@ -33,9 +33,9 @@ api.interceptors.response.use(
       // 服务器返回错误状态码
       if (error.response.status === 401) {
         // 未授权 - token可能无效或过期
-        console.error("Unauthorized (401) error detected. Logging out.");
-        // Call the store's logout action for clean state management
-        useUserStore.getState().logout(); 
+        console.error("Unauthorized (401) error detected. Clearing user state.");
+        // Call the store's clearUser action for clean state management
+        useUserStore.getState().clearUser();
         // Optionally: Force a redirect to login page after state update
         // window.location.href = '/login'; 
       }

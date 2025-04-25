@@ -7,6 +7,9 @@ interface UserProfileInfoProps {
   onStartEdit: () => void;
 }
 
+// API Base URL - Define this constant
+const API_BASE_URL = 'http://localhost:8080';
+
 // Helper function moved from Profile.tsx
 const getInterestTagColor = (index: number): string => {
   const colors = [
@@ -22,6 +25,13 @@ const getInterestTagColor = (index: number): string => {
 };
 
 const UserProfileInfo: React.FC<UserProfileInfoProps> = ({ user, pets, onStartEdit }) => {
+  // Construct the full avatar URL
+  const avatarUrl = user.avatar
+    ? user.avatar.startsWith('/uploads/')
+      ? `${API_BASE_URL}${user.avatar}`
+      : user.avatar // Assume it's already a full URL if it doesn't start with /uploads/
+    : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=128&h=128&q=80'; // Default placeholder
+
   return (
     <>
       {/* Top Section: Banner, Avatar, Basic Info */}
@@ -35,7 +45,7 @@ const UserProfileInfo: React.FC<UserProfileInfoProps> = ({ user, pets, onStartEd
           <div className="flex flex-col sm:flex-row items-end sm:items-start">
             <div className="-mt-16 mb-4 sm:mb-0">
               <img
-                src={user.avatar || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=128&h=128&q=80'} // Use placeholder or default
+                src={avatarUrl} // Use the constructed URL
                 alt="User Avatar"
                 className="w-32 h-32 rounded-full border-4 border-white shadow-md bg-gray-200 object-cover"
               />

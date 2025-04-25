@@ -1,162 +1,146 @@
 import { create } from 'zustand';
-import { persist, devtools } from 'zustand/middleware';
+import axios from 'axios';
 import { api } from '../services/api';
 import { User, LoginCredentials } from '../types';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface UserState {
-  fetchProfile: () => Promise<void>;
   user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  isInitializing: boolean;
-  error: string | null;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => void;
-  updateProfile: (data: Partial<User>) => Promise<void>;
-  clearError: () => void;
   token: string | null;
+  isInitializing: boolean;
+  isLoading: boolean;
+  error: string | null;
+  setUser: (user: User | null, token: string | null) => void;
+  clearUser: () => void;
+  loginUser: (credentials: LoginCredentials) => Promise<void>;
+  registerUser: (userData: any) => Promise<void>;
   fetchUserProfile: () => Promise<void>;
-  updateUserProfile: (profileData: Partial<User>) => Promise<void>;
+  updateUserProfile: (formData: FormData) => Promise<void>;
 }
 
-export const useUserStore = create<UserState>()(
-  devtools(
-    persist(
-      (set, get) => ({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        isInitializing: true,
-        error: null,
-        token: null,
-        
-        fetchProfile: async () => {
-          // This is likely deprecated, use fetchUserProfile instead
-          console.warn("fetchProfile called, ensure it's still needed or use fetchUserProfile");
-          await get().fetchUserProfile(); // Delegate to the correct function
-        },
-        
-        login: async (credentials: LoginCredentials) => {
-          set({ isLoading: true, error: null });
-          try {
-            const response = await api.post('/auth/login', credentials);
-            const { user, token } = response.data;
-            if (!user || !token) {
-              throw new Error('Invalid response from server');
-            }
-            // Interceptor handles token header
-            // Set user, token, mark as authenticated, stop loading AND initialization
-            set({ user: user, token: token, isLoading: false, isAuthenticated: true, isInitializing: false, error: null });
-          } catch (err: any) {
-            const errorMessage = err.response?.data?.error || 'Login failed. Please check credentials.';
-            console.error('Login error:', err.response || err);
-            delete api.defaults.headers.common['Authorization']; // Ensure header removed
-            set({ error: errorMessage, isLoading: false, user: null, token: null, isAuthenticated: false, isInitializing: false }); // Stop initializing on login fail too
-          }
-        },
-        
-        logout: () => {
-          localStorage.removeItem('user-storage'); // Explicit removal
-          delete api.defaults.headers.common['Authorization'];
-          // Reset state, including setting isInitializing to false (no longer initializing)
-          set({ user: null, token: null, error: null, isAuthenticated: false, isLoading: false, isInitializing: false });
-        },
-        
-        updateProfile: async (data: Partial<User>) => {
-          // This might be deprecated, use updateUserProfile instead
-          console.warn("updateProfile called, ensure endpoint is protected and correct (/api/v1/users/me?)");
-          await get().updateUserProfile(data);
-        },
-        
-        clearError: () => set({ error: null }),
+export const useUserStore = create<UserState>()(persist(
+  (set, get) => ({
+    user: null,
+    token: null,
+    isInitializing: true,
+    isLoading: false,
+    error: null,
 
-        fetchUserProfile: async () => {
-          // This function is called by initializeAuth if token exists
-          const token = get().token;
-          if (!token) {
-            // This case should ideally be handled by initializeAuth before calling this,
-            // but as a safeguard, stop initializing if no token.
-            set({ isInitializing: false, isAuthenticated: false, user: null, token: null });
-            return;
-          }
-          // Keep isLoading for this specific action if needed, but isInitializing is the key here
-          set({ isLoading: true, error: null }); // Might set isLoading: true here
-          try {
-            const response = await api.get('/api/v1/me');
-            const fetchedUser = response.data as User; 
-
-            if (fetchedUser && fetchedUser.id) { 
-                console.log("Successfully fetched user profile:", fetchedUser);
-                // Set user, mark authenticated, stop initializing
-                set({ user: fetchedUser, isLoading: false, isAuthenticated: true, isInitializing: false, error: null });
-            } else {
-                 console.error("Failed to get valid user data from /api/v1/me response:", response.data);
-                 // Failed to get user, stop initializing, mark unauthenticated
-                 set({ isLoading: false, isAuthenticated: false, user: null, isInitializing: false, error: "Failed to retrieve valid profile data." });
-                 // Optional: Logout fully?
-                 // get().logout(); 
-            }
-          } catch (err: any) {
-            const errorMessage = err.response?.data?.error || 'Failed to fetch user profile';
-            console.error('Fetch user profile error:', err.response || err);
-            // Error fetching profile (token expired, server error etc.), log out
-            get().logout(); // logout sets isInitializing to false
-            // Preserve the specific error message after logout resets it
-            set(state => ({ ...state, error: errorMessage })); 
-          }
-        },
-        
-        updateUserProfile: async (profileData: Partial<User>) => {
-           console.warn("updateUserProfile called, ensure endpoint is protected: /api/v1/users/me?");
-           const token = get().token;
-           if (!token || !get().user) return; // Need token and existing user data
-           set({ isLoading: true, error: null });
-           try {
-             // Assuming PATCH /api/v1/me updates and returns the updated user
-             const response = await api.patch('/api/v1/me', profileData); 
-             const updatedUser = response.data as User;
-             if (updatedUser && updatedUser.id) {
-               set({ user: updatedUser, isLoading: false }); // Update user state with response
-             } else {
-               console.error("Invalid response from PATCH /api/v1/me", response.data);
-               set({ isLoading: false, error: "Failed to update profile (invalid response)." });
-             }
-           } catch (err: any) {
-             const errorMessage = err.response?.data?.error || 'Failed to update profile';
-             console.error('Update profile error:', err.response || err);
-             set({ error: errorMessage, isLoading: false });
-           }
-        }
-      }),
-      {
-        name: 'user-storage',
-        partialize: (state) => ({ token: state.token }), // Only persist token
-        // onRehydrateStorage might be needed if we want to set isInitializing=true
-        // *only* when rehydrating from storage, but default true should work.
+    setUser: (user, token) => {
+      if (token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } else {
+        delete api.defaults.headers.common['Authorization'];
       }
-    )
-  )
-);
+      set({ user, token, isInitializing: false, isLoading: false, error: null });
+    },
 
-// Function to initialize auth state on app load
-export const initializeAuth = () => {
-  // Set initializing flag at the very start
-  useUserStore.setState({ isInitializing: true });
-  
-  // Zustand's persist middleware should have rehydrated the token by now
-  const token = useUserStore.getState().token;
-  
-  if (token) {
-    // Interceptor handles adding token to requests
-    console.log("Token found on init, attempting to fetch user profile.");
-    // Attempt to fetch user profile (this will set isInitializing to false on completion/error)
-    useUserStore.getState().fetchUserProfile();
-  } else {
-    console.log("No token found on init.");
-    // No token, so initialization is done, ensure clean state
-    delete api.defaults.headers.common['Authorization']; // Just in case
-    useUserStore.setState({ user: null, isAuthenticated: false, token: null, isLoading: false, error: null, isInitializing: false });
+    clearUser: () => {
+      delete api.defaults.headers.common['Authorization'];
+      set({ user: null, token: null, isInitializing: false, isLoading: false, error: null });
+    },
+
+    loginUser: async (credentials) => {
+      set({ isLoading: true, error: null, isInitializing: false });
+      try {
+        const response = await api.post('/auth/login', credentials);
+        const { token, user } = response.data; 
+        get().setUser(user, token);
+      } catch (error) {
+        let errorMessage = "Login failed. Please check your credentials.";
+        if (axios.isAxiosError(error) && error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        }
+        console.error("Login Error:", error);
+        set({ error: errorMessage, isLoading: false });
+      }
+    },
+
+    registerUser: async (userData) => {
+      set({ isLoading: true, error: null, isInitializing: false });
+      try {
+        await api.post('/auth/register', userData);
+        set({ isLoading: false });
+      } catch (error) {
+        let errorMessage = "Registration failed. Please try again.";
+        if (axios.isAxiosError(error) && error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        }
+         console.error("Registration Error:", error);
+        set({ error: errorMessage, isLoading: false });
+      }
+    },
+
+    fetchUserProfile: async () => {
+      const token = get().token;
+      if (!get().isInitializing && !token) return; 
+      if (get().isInitializing && !token) {
+        set({ isInitializing: false });
+        return;
+      }
+      
+      if (!token) return; 
+
+      set({ isLoading: true, error: null });
+      try {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        const response = await api.get('/api/v1/me');
+        set({ user: response.data as User, isLoading: false, isInitializing: false, error: null });
+        
+      } catch (error) {
+        console.error("Fetch User Profile Error:", error);
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          console.warn("fetchUserProfile: Token invalid or expired.")
+          get().clearUser();
+        } else {
+          set({ error: "Failed to load profile.", isLoading: false, isInitializing: false });
+        }
+      }
+    },
+    
+    updateUserProfile: async (formData: FormData) => {
+      console.log("Attempting to update user profile via store...");
+      const token = get().token;
+      if (!token) {
+        set({ error: 'Authentication required', isLoading: false });
+        throw new Error('Authentication required');
+      }
+      set({ isLoading: true, error: null });
+      try {
+        const response = await api.patch('/api/v1/me', formData, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }); 
+        const updatedUser = response.data as User;
+        if (updatedUser && updatedUser.id) {
+          console.log("User profile updated successfully in store:", updatedUser);
+          set({ user: updatedUser, isLoading: false });
+        } else {
+          console.error("Update Profile Error: Invalid data received", response.data);
+          throw new Error("Invalid user data received after update.");
+        }
+      } catch (error) {
+        let errorMessage = "Failed to update profile.";
+        if (axios.isAxiosError(error)) {
+           console.error("Update Profile Axios Error:", error.response?.data || error.message);
+           errorMessage = error.response?.data?.error || error.message || errorMessage;
+        } else {
+           console.error("Update Profile Non-Axios Error:", error);
+        }
+        set({ error: errorMessage, isLoading: false });
+        throw new Error(errorMessage);
+      }
+    },
+    
+  }),
+  {
+    name: 'user-storage',
+    storage: createJSONStorage(() => localStorage),
+    partialize: (state) => ({ token: state.token }),
   }
-};
+));
 
-// Call initializeAuth when the app loads (e.g., in your main App component or index.tsx)
+// Initial fetch logic moved to App.tsx useEffect hook
+// console.log("Initial call to fetchUserProfile (outside store setup)");
+// useUserStore.getState().fetchUserProfile(); 

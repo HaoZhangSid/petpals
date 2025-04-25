@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { useUserStore } from '../../store/userStore';
 import { usePetStore } from '../../store/petStore';
 import { useState, useEffect } from 'react';
+import { api } from '../../services/api';
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
@@ -9,9 +10,10 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isMobileMenuOpen, toggleMobileMenu }: SidebarProps) => {
-  const { user, logout } = useUserStore();
+  const { user, clearUser } = useUserStore();
   const activePet = usePetStore(state => state.activePet);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const API_BASE_URL = api.defaults.baseURL;
 
   // Track window resize for responsive behavior
   useEffect(() => {
@@ -66,9 +68,9 @@ const Sidebar = ({ isMobileMenuOpen, toggleMobileMenu }: SidebarProps) => {
         <div className="px-4 py-2">
           <div className="bg-lavender bg-opacity-30 rounded-xl p-3 flex items-center space-x-3 mb-6">
             <img 
-              src={user?.avatar || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80"} 
+              src={user?.avatar ? `${API_BASE_URL}${user.avatar}` : "https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=50&h=50&q=80"} 
               alt="User Avatar" 
-              className="h-10 w-10 rounded-full border-2 border-white"
+              className="h-10 w-10 rounded-full border-2 border-white object-cover"
             />
             <div>
               <p className="text-sm font-semibold text-purple-700">
@@ -164,7 +166,7 @@ const Sidebar = ({ isMobileMenuOpen, toggleMobileMenu }: SidebarProps) => {
         
         <div className="absolute bottom-4 w-full px-4">
           <button 
-            onClick={logout}
+            onClick={clearUser}
             className="nav-item flex items-center space-x-3 hover:bg-gray-100 p-3 rounded-xl text-gray-700 w-full"
           >
             <span className="text-lg">🚪</span>

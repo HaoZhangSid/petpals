@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useUserStore } from '../store/userStore';
+import { api } from '../services/api';
 
 const Settings = () => {
-  const { user, updateProfile, logout } = useUserStore();
+  const { user, updateUserProfile, clearUser } = useUserStore();
   const [activeSection, setActiveSection] = useState<'account' | 'notifications' | 'privacy' | 'help'>('account');
+  const API_BASE_URL = api.defaults.baseURL;
   
   const [accountForm, setAccountForm] = useState({
     name: user?.name || '',
-    email: user?.email || '',
     bio: user?.bio || '',
     location: user?.location || ''
   });
@@ -28,15 +29,19 @@ const Settings = () => {
   
   const handleAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const formData = new FormData();
+    formData.append('name', accountForm.name);
+    formData.append('bio', accountForm.bio);
+    formData.append('location', accountForm.location);
+
     try {
-      await updateProfile({
-        name: accountForm.name,
-        bio: accountForm.bio,
-        location: accountForm.location
-      });
+      console.log("Submitting settings account form:", accountForm);
+      await updateUserProfile(formData); 
       alert('Account information updated successfully');
     } catch (error) {
       console.error('Failed to update account information', error);
+      alert(`Failed to update account: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
   
@@ -108,7 +113,7 @@ const Settings = () => {
             
             <div className="border-t border-gray-200 mt-4 pt-4">
               <button
-                onClick={logout}
+                onClick={clearUser}
                 className="w-full text-left px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition"
               >
                 <span className="mr-3">🚪</span> Logout
@@ -138,9 +143,9 @@ const Settings = () => {
                 
                 <div className="flex items-center mb-8">
                   <img
-                    src={user?.avatar || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80"}
+                    src={user?.avatar ? `${API_BASE_URL}${user.avatar}` : "https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=120&h=120&q=80"}
                     alt="User Avatar"
-                    className="w-24 h-24 rounded-full border-4 border-mintgreen mr-6"
+                    className="w-24 h-24 rounded-full border-4 border-mintgreen mr-6 object-cover"
                   />
                   <div>
                     <h3 className="font-bold text-lg text-gray-800">{user?.name || 'Username'}</h3>
@@ -174,7 +179,7 @@ const Settings = () => {
                       <input
                         id="email"
                         type="email"
-                        value={accountForm.email}
+                        value={user?.email || ''}
                         disabled
                         className="w-full bg-gray-100 border border-gray-200 rounded-full px-4 py-3 focus:outline-none"
                       />

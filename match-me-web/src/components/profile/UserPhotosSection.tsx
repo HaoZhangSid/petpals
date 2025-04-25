@@ -7,9 +7,15 @@ interface UserPhotosSectionProps {
   openLightbox: (images: string[], index: number) => void;
 }
 
+// Define API Base URL
+const API_BASE_URL = 'http://localhost:8080';
+
 const UserPhotosSection: React.FC<UserPhotosSectionProps> = ({ user, onStartEdit, openLightbox }) => {
-  // Determine the base URL for images if needed, or assume they are full URLs
-  // const API_BASE_URL = 'http://localhost:8080'; // Define if needed
+
+  // Helper to construct full photo URL
+  const getFullPhotoUrl = (url: string) => {
+    return url.startsWith('/uploads/') ? `${API_BASE_URL}${url}` : url;
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-soft overflow-hidden mb-8">
@@ -34,8 +40,7 @@ const UserPhotosSection: React.FC<UserPhotosSectionProps> = ({ user, onStartEdit
                   onClick={() => openLightbox(user.photos || [], index)}
                 >
                   <img
-                    // Assuming user.photos contains full URLs or relative paths handled by the server
-                    src={photoUrl}
+                    src={getFullPhotoUrl(photoUrl)}
                     alt={`${user.name} photo ${index + 1}`}
                     className="w-full h-full object-cover hover:opacity-90 transition duration-300 bg-gray-200 aspect-square"
                     // Add onError handler if needed

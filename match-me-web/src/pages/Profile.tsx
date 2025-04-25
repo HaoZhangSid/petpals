@@ -4,6 +4,7 @@ import { usePetStore } from '../store/petStore';
 import { User, Pet } from '../types';
 import { useModal } from '../contexts/ModalContext';
 import UserProfileForm from '../components/profile/UserProfileForm';
+import UserPhotosForm from '../components/profile/UserPhotosForm';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import Lightbox from '../components/common/Lightbox';
@@ -20,6 +21,7 @@ const Profile = () => {
   const { openAddPetModal } = useModal();
 
   const [editingUser, setEditingUser] = useState(false);
+  const [isEditingPhotos, setIsEditingPhotos] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
@@ -29,27 +31,48 @@ const Profile = () => {
   const [currentLightboxIndex, setCurrentLightboxIndex] = useState(0);
 
   const handleStartEditUser = () => setEditingUser(true);
+  const handleStartEditPhotos = () => setIsEditingPhotos(true);
   const handleCancelEdit = () => {
     setEditingUser(false);
+    setIsEditingPhotos(false);
   };
 
-  const handleSaveUserProfile = async (data: Partial<User>) => {
+  const handleSaveUserProfile = async (formData: FormData) => {
     setIsSaving(true);
     setSaveSuccess(null);
     try {
-      await updateUserProfile(data);
+      await updateUserProfile(formData);
       setSaveSuccess("Profile updated successfully!");
       setEditingUser(false);
       setTimeout(() => setSaveSuccess(null), 3000);
-    } catch (error) {
+      } catch (error) {
       console.error("Failed to save user profile:", error);
+      setSaveSuccess("Failed to update profile. Please try again.");
+      setTimeout(() => setSaveSuccess(null), 4000);
+      } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveUserPhotos = async (formData: FormData) => {
+    setIsSaving(true);
+    setSaveSuccess(null);
+    try {
+      await updateUserProfile(formData);
+      setSaveSuccess("Photos updated successfully!");
+      setIsEditingPhotos(false);
+      setTimeout(() => setSaveSuccess(null), 3000);
+    } catch (error) {
+      console.error("Failed to save user photos:", error);
+      setSaveSuccess("Failed to update photos. Please try again.");
+      setTimeout(() => setSaveSuccess(null), 4000);
     } finally {
       setIsSaving(false);
     }
   };
 
   const openLightbox = (images: string[], index: number) => {
-    const apiBaseUrl = 'http://localhost:8080';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
     const fullImageUrls = images.map(img =>
       img.startsWith('/uploads/') ? `${apiBaseUrl}${img}` : img
     );
@@ -70,7 +93,7 @@ const Profile = () => {
   }
 
   if (!user) {
-    return (
+      return (
         <div className="flex justify-center items-center h-screen">
             <div className="text-center p-6 bg-white rounded-lg shadow-md">
                 <h2 className="text-xl font-semibold text-red-600 mb-3">Access Denied</h2>
@@ -78,7 +101,7 @@ const Profile = () => {
                  <Link to="/login" className="text-blue-500 hover:underline">Go to Login</Link> 
             </div>
         </div>
-    );
+      );
   }
 
   return (
@@ -91,9 +114,9 @@ const Profile = () => {
             className="bg-softpink hover:bg-pink-400 text-white px-4 sm:px-6 py-2 rounded-full shadow-md transition duration-300 flex items-center"
           >
             <span className="mr-2">✏️</span>
-            Edit Profile
-          </button>
-        </div>
+          Edit Profile
+        </button>
+      </div>
 
         <AnimatePresence>
           {saveSuccess && (
@@ -101,9 +124,9 @@ const Profile = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-center"
+              className={`border ${saveSuccess.includes('Failed') ? 'bg-red-100 border-red-200 text-red-700' : 'bg-green-100 border-green-200 text-green-700'} px-4 py-3 rounded-lg mb-6 flex items-center justify-center`}
             >
-              <span className="mr-2">✅</span>
+              <span className="mr-2">{saveSuccess.includes('Failed') ? '❌' : '✅'}</span>
               {saveSuccess}
             </motion.div>
           )}
@@ -111,7 +134,7 @@ const Profile = () => {
 
         <UserProfileInfo user={user} pets={pets} onStartEdit={handleStartEditUser} />
 
-        <UserPhotosSection user={user} onStartEdit={handleStartEditUser} openLightbox={openLightbox} />
+        <UserPhotosSection user={user} onStartEdit={handleStartEditPhotos} openLightbox={openLightbox} />
 
         <MyPetsSection
           openAddPetModal={openAddPetModal}
@@ -121,6 +144,16 @@ const Profile = () => {
 
       <AnimatePresence>
         {editingUser && ( <UserProfileForm user={user} onSubmit={handleSaveUserProfile} onCancel={handleCancelEdit} /> )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isEditingPhotos && (
+          <UserPhotosForm 
+            user={user} 
+            onSubmit={handleSaveUserPhotos} 
+            onCancel={() => setIsEditingPhotos(false)}
+          />
+        )}
       </AnimatePresence>
 
       {isLightboxOpen && (

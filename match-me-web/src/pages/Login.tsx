@@ -6,8 +6,8 @@ import { useModal } from '../contexts/ModalContext';
 const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login, error, isLoading, user } = useUserStore(); // Get state and actions
-  const { openAddPetModal } = useModal(); // Get modal opening function
+  const { loginUser, error, isLoading, user } = useUserStore();
+  const { openAddPetModal } = useModal();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,7 +15,6 @@ const Login = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [shouldPromptAddPet, setShouldPromptAddPet] = useState(false);
 
-  // Check for registration success message and addPet parameter
   useEffect(() => {
     if (searchParams.get('registered') === 'true') {
       setShowSuccessMessage(true);
@@ -26,19 +25,16 @@ const Login = () => {
     }
   }, [searchParams]);
 
-  // Redirect if user is already logged in, handle pet prompt if needed
   useEffect(() => {
     if (user) {
       if (shouldPromptAddPet) {
-        // Remove the URL parameters
         navigate('/', { replace: true });
         
-        // Show a small delay before showing the modal (let the dashboard load first)
         setTimeout(() => {
           openAddPetModal();
         }, 500);
       } else {
-        navigate('/', { replace: true }); // Regular redirect to dashboard
+        navigate('/', { replace: true });
       }
     }
   }, [user, navigate, shouldPromptAddPet, openAddPetModal]);
@@ -52,20 +48,15 @@ const Login = () => {
       return;
     }
 
-    await login({ email, password });
-    // Error handling is now primarily managed within the useUserStore
-    // The useEffect above will handle redirection and pet modal if needed
+    await loginUser({ email, password });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-cream">
-      {/* Use a similar card structure as Register for consistency */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-4xl bg-white rounded-3xl shadow-soft overflow-hidden">
-         {/* Left Column - Image/Info */}
          <div className="hidden md:block relative bg-gradient-to-br from-softpink to-lavender">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center p-8">
-                {/* Different image/text for login */}
                 <img 
                   src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&h=400&q=80" 
                   alt="Happy Pets" 
@@ -77,7 +68,6 @@ const Login = () => {
             </div>
          </div>
 
-        {/* Right Column - Login Form */}
         <div className="p-8 md:p-10 flex flex-col justify-center">
           <div className="mb-6 text-center md:text-left">
             <img 
@@ -90,14 +80,12 @@ const Login = () => {
           <h1 className="text-3xl font-bold text-purple-700 mb-2">Sign In</h1>
           <p className="text-gray-600 mb-6">Enter your credentials to access your account.</p>
 
-          {/* Registration Success Message */}
           {showSuccessMessage && (
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
               <span className="block sm:inline">Registration successful! Please log in.</span>
             </div>
           )}
 
-          {/* General Error Display (from store or local) */}
           {(error || localError) && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4" role="alert">
               <span className="block sm:inline">{error || localError}</span>
@@ -133,7 +121,6 @@ const Login = () => {
                     className="bg-transparent w-full focus:outline-none text-sm"
                   />
               </div>
-               {/* Optional: Add Forgot Password link */}
                <div className="text-right mt-1">
                  <Link to="/forgot-password" className="text-xs text-skyblue hover:underline">
                    Forgot Password?

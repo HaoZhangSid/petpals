@@ -27,3 +27,18 @@ type User struct {
 	// It's likely loaded separately or via preload.
 	Pets []Pet `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;" json:"-"` // Added json tag
 }
+
+// UserUpdatePayload defines the structure for updating a user profile.
+// Pointers are used to distinguish between providing an empty value (e.g., empty string)
+// and not providing the field at all (nil).
+type UserUpdatePayload struct {
+	Name         *string         `json:"name,omitempty"`
+	Avatar       *string         `json:"avatar,omitempty"` // Expecting a URL or identifier
+	Location     *string         `json:"location,omitempty"`
+	Phone        *string         `json:"phone,omitempty"`
+	Bio          *string         `json:"bio,omitempty"`
+	Interests    *pq.StringArray `json:"interests,omitempty"` // If provided, replaces the entire list
+	Photos       *pq.StringArray `json:"photos,omitempty"`    // If provided, represents the desired *final* list
+	AppendPhotos []string        `json:"-"`                   // Internal use: URLs of newly uploaded photos to append
+	// Password updates should be handled via a separate, dedicated endpoint/flow.
+}
