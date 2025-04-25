@@ -408,7 +408,7 @@ const PetProfileForm: React.FC<PetProfileFormProps> = ({
     }
 
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
         <div className="flex justify-center mb-6">
           <div className="relative group">
             <img 
@@ -445,7 +445,14 @@ const PetProfileForm: React.FC<PetProfileFormProps> = ({
         </div>
         <div>
           <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">Pet Type *</label>
-          <select id="type" name="type" value={formData.type ?? 'Dog'} onChange={handleInputChange} required>
+          <select 
+            id="type" 
+            name="type" 
+            value={formData.type ?? 'Dog'} 
+            onChange={handleInputChange} 
+            required 
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+          >
             <option value="Dog">Dog</option>
             <option value="Cat">Cat</option>
             <option value="Bird">Bird</option>
@@ -457,16 +464,37 @@ const PetProfileForm: React.FC<PetProfileFormProps> = ({
         </div>
         <div>
           <label htmlFor="breed" className="block text-sm font-medium text-gray-700 mb-1">Breed</label>
-          <input id="breed" name="breed" value={formData.breed ?? ''} onChange={handleInputChange} />
+          <input 
+            id="breed" 
+            name="breed" 
+            value={formData.breed ?? ''} 
+            onChange={handleInputChange} 
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">Age (years)</label>
-            <input type="number" id="age" name="age" value={String(formData.age ?? '')} onChange={handleInputChange} min="0" step="0.1" />
+            <input 
+              type="number" 
+              id="age" 
+              name="age" 
+              value={String(formData.age ?? '')} 
+              onChange={handleInputChange} 
+              min="0" 
+              step="0.1" 
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
           </div>
           <div>
             <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-            <select id="gender" name="gender" value={formData.gender ?? ''} onChange={handleInputChange}>
+            <select 
+              id="gender" 
+              name="gender" 
+              value={formData.gender ?? ''} 
+              onChange={handleInputChange} 
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+            >
               <option value="">Select</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
@@ -611,7 +639,7 @@ const PetProfileForm: React.FC<PetProfileFormProps> = ({
             type="date"
             id="birthday"
             name="birthday"
-            value={formData.birthday ?? ''}
+            value={formData.birthday && typeof formData.birthday === 'string' ? formData.birthday.slice(0, 10) : ''}
             onChange={handleInputChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           />

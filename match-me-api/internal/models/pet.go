@@ -39,22 +39,22 @@ type Pet struct {
 // PetUpdatePayload defines the structure for updating a pet.
 // Uses pointers for most fields to distinguish between zero values and fields not provided.
 type PetUpdatePayload struct {
-	Name               *string        `json:"name,omitempty"`
-	Type               *string        `json:"type,omitempty"`
-	Breed              *string        `json:"breed,omitempty"`
-	Age                *float64       `json:"age,omitempty"`
-	Gender             *string        `json:"gender,omitempty"`
-	Weight             *float64       `json:"weight,omitempty"` // Corresponds to frontend 'size'
-	Birthday           *time.Time     `json:"birthday,omitempty"`
-	Avatar             *string        `json:"avatar,omitempty"` // URL of new avatar if changed
-	Bio                *string        `json:"bio,omitempty"`    // Corresponds to frontend 'description'
-	Personality        pq.StringArray `json:"personality,omitempty"`
-	FavoriteActivities pq.StringArray `json:"favoriteActivities,omitempty"`
-	PlayStyle          pq.StringArray `json:"playStyle,omitempty"`
-	ActivityLevel      *string        `json:"activityLevel,omitempty"` // Corresponds to frontend 'energyLevel'
-	IsMicrochipped     *bool          `json:"isMicrochipped,omitempty"`
-	IsVaccinated       *bool          `json:"isVaccinated,omitempty"`
-	IsNeutered         *bool          `json:"isNeutered,omitempty"`
+	Name               *string         `json:"name,omitempty"`
+	Type               *string         `json:"type,omitempty"`
+	Breed              *string         `json:"breed,omitempty"`
+	Age                *float64        `json:"age,omitempty"`
+	Gender             *string         `json:"gender,omitempty"`
+	Weight             *float64        `json:"weight,omitempty"` // Corresponds to frontend 'size'
+	Birthday           *time.Time      `json:"birthday,omitempty"`
+	Avatar             *string         `json:"avatar,omitempty"` // URL of new avatar if changed
+	Bio                *string         `json:"bio,omitempty"`    // Corresponds to frontend 'description'
+	Personality        *pq.StringArray `json:"personality,omitempty"`
+	FavoriteActivities *pq.StringArray `json:"favoriteActivities,omitempty"`
+	PlayStyle          *pq.StringArray `json:"playStyle,omitempty"`
+	ActivityLevel      *string         `json:"activityLevel,omitempty"` // Corresponds to frontend 'energyLevel'
+	IsMicrochipped     *bool           `json:"isMicrochipped,omitempty"`
+	IsVaccinated       *bool           `json:"isVaccinated,omitempty"`
+	IsNeutered         *bool           `json:"isNeutered,omitempty"`
 
 	// --- Fields specifically for handling photo updates ---
 	// Photos represents the desired *final* list of photo URLs (excluding newly appended ones)
