@@ -15,13 +15,10 @@ type Pet struct {
 	Name               string         `gorm:"size:255;not null" json:"name"`
 	Type               string         `gorm:"size:50;not null" json:"type"`
 	Breed              *string        `gorm:"size:100" json:"breed,omitempty"`
-	Age                *float64       `gorm:"type:float" json:"age,omitempty"`
 	Gender             *string        `gorm:"size:20" json:"gender,omitempty"`
 	Weight             *float64       `gorm:"type:float" json:"weight,omitempty"`
 	Birthday           *time.Time     `gorm:"type:date" json:"birthday,omitempty"`
-	Avatar             *string        `gorm:"type:varchar(1024)" json:"avatar,omitempty"`
 	Bio                *string        `gorm:"type:text" json:"bio,omitempty"`
-	Photos             pq.StringArray `gorm:"type:text[]" json:"photos,omitempty"`
 	Personality        pq.StringArray `gorm:"type:text[]" json:"personality,omitempty"`
 	FavoriteActivities pq.StringArray `gorm:"type:text[]" json:"favoriteActivities,omitempty"`
 	PlayStyle          pq.StringArray `gorm:"type:text[]" json:"playStyle,omitempty"`
@@ -34,6 +31,10 @@ type Pet struct {
 	DeletedAt          gorm.DeletedAt `gorm:"index" json:"-"`
 	// Relationships
 	User User `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
+
+	// Transient field for API responses (populated by service layer)
+	AvatarURL *string  `gorm:"-" json:"avatarUrl,omitempty"` // Primary photo URL
+	PhotoURLs []string `gorm:"-" json:"photoUrls,omitempty"` // Other photo URLs
 }
 
 // PetUpdatePayload defines the structure for updating a pet.
@@ -42,24 +43,15 @@ type PetUpdatePayload struct {
 	Name               *string         `json:"name,omitempty"`
 	Type               *string         `json:"type,omitempty"`
 	Breed              *string         `json:"breed,omitempty"`
-	Age                *float64        `json:"age,omitempty"`
 	Gender             *string         `json:"gender,omitempty"`
-	Weight             *float64        `json:"weight,omitempty"` // Corresponds to frontend 'size'
+	Weight             *float64        `json:"weight,omitempty"`
 	Birthday           *time.Time      `json:"birthday,omitempty"`
-	Avatar             *string         `json:"avatar,omitempty"` // URL of new avatar if changed
-	Bio                *string         `json:"bio,omitempty"`    // Corresponds to frontend 'description'
+	Bio                *string         `json:"bio,omitempty"`
 	Personality        *pq.StringArray `json:"personality,omitempty"`
 	FavoriteActivities *pq.StringArray `json:"favoriteActivities,omitempty"`
 	PlayStyle          *pq.StringArray `json:"playStyle,omitempty"`
-	ActivityLevel      *string         `json:"activityLevel,omitempty"` // Corresponds to frontend 'energyLevel'
+	ActivityLevel      *string         `json:"activityLevel,omitempty"`
 	IsMicrochipped     *bool           `json:"isMicrochipped,omitempty"`
 	IsVaccinated       *bool           `json:"isVaccinated,omitempty"`
 	IsNeutered         *bool           `json:"isNeutered,omitempty"`
-
-	// --- Fields specifically for handling photo updates ---
-	// Photos represents the desired *final* list of photo URLs (excluding newly appended ones)
-	// Use pointer to distinguish between empty list and not provided.
-	Photos       *pq.StringArray `json:"-"` // Parsed from form field 'photos'
-	AppendPhotos []string        `json:"-"` // URLs of newly uploaded photos to append (internal use)
-	// RemovePhotos       []string       `json:"removePhotos,omitempty"` // Optional: URLs of photos to remove
 }

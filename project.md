@@ -77,22 +77,23 @@ Users can manage multiple pet profiles and modify any profile information at any
 
 ## Data Models (Based on Go Code)
 
-Describes the primary data structures used in the application, reflecting the Go `internal/models` definitions.
+Describes the primary data structures used in the application, reflecting the Go `internal/models` definitions after refactoring.
 
 - **User** (`models/user.go`):
   - `ID` (uuid.UUID): Primary Key.
   - `Name` (string): User's full name.
   - `Email` (string): Unique email address.
   - `Password` (string): Hashed password (excluded from JSON output).
-  - `Avatar` (string): URL path to the user's avatar image (e.g., `/uploads/...`).
   - `Location` (string): User's location (e.g., city, neighborhood).
   - `Phone` (string): User's phone number.
   - `Bio` (string): User's 'About Me' description.
   - `Interests` (pq.StringArray): Array of user's interests.
-  - `Photos` (pq.StringArray): Array of URL paths to user's photos.
   - `CreatedAt` (time.Time): Timestamp of creation.
   - `UpdatedAt` (time.Time): Timestamp of last update.
   - *Relationships*: `Pets` (has many `Pet`).
+  - *Transient Fields (for API response)*:
+    - `AvatarURL` (*string): URL of the primary photo (`Photo` where `IsPrimary=true`).
+    - `PhotoURLs` ([]string): URLs of other photos (from `Photo` model, ordered).
 
 - **Pet** (`models/pet.go`):
   - `ID` (uuid.UUID): Primary Key.
@@ -100,13 +101,10 @@ Describes the primary data structures used in the application, reflecting the Go
   - `Name` (string): Pet's name.
   - `Type` (string): Type of pet (e.g., "dog", "cat").
   - `Breed` (*string): Pet's breed.
-  - `Age` (*float64): Pet's age (in years, allows fractions).
   - `Gender` (*string): Pet's gender.
   - `Weight` (*float64): Pet's weight.
-  - `Birthday` (*time.Time): Pet's date of birth.
-  - `Avatar` (*string): URL path to the pet's primary photo.
+  - `Birthday` (*time.Time): Pet's date of birth (Age is calculated from this).
   - `Bio` (*string): Description or notes about the pet.
-  - `Photos` (pq.StringArray): Array of URL paths to additional pet photos.
   - `Personality` (pq.StringArray): Array of personality traits (e.g., "playful", "calm").
   - `FavoriteActivities` (pq.StringArray): Array of pet's favorite activities.
   - `PlayStyle` (pq.StringArray): Array describing pet's play style.
@@ -118,26 +116,60 @@ Describes the primary data structures used in the application, reflecting the Go
   - `UpdatedAt` (time.Time): Timestamp of last update.
   - `DeletedAt` (gorm.DeletedAt): Timestamp for soft delete.
   - *Relationships*: `User` (belongs to `User`).
+  - *Transient Fields (for API response)*:
+    - `AvatarURL` (*string): URL of the primary photo (`Photo` where `IsPrimary=true`).
+    - `PhotoURLs` ([]string): URLs of other photos (from `Photo` model, ordered).
+
+- **Photo** (`models/photo.go`):
+  - `ID` (uuid.UUID): Primary Key.
+  - `OwnerType` (string): Type of owner ("user" or "pet").
+  - `OwnerID` (uuid.UUID): Foreign Key to the owner (User ID or Pet ID).
+  - `URL` (string): URL path to the photo file (e.g., `/uploads/...`).
+  - `IsPrimary` (bool): Indicates if this is the main profile/avatar photo.
+  - `Order` (int): Used for sorting photos in a gallery.
+  - `Caption` (string): Optional caption for the photo.
+  - `CreatedAt` (time.Time).
+  - `UpdatedAt` (time.Time).
+
+- **Connection** (`models/connection.go`):
+  - `ID` (uuid.UUID): Primary Key.
+  - `RequesterID` (uuid.UUID): Foreign Key to `User` who initiated the connection.
+  - `ReceiverID` (uuid.UUID): Foreign Key to `User` who received the request.
+  - `Status` (string): Connection status (e.g., "pending", "accepted", "blocked").
+  - `CreatedAt` (time.Time).
+  - `UpdatedAt` (time.Time).
+
+- **Conversation** (`models/message.go`):
+  - `ID` (uuid.UUID): Primary Key.
+  - `User1ID` (uuid.UUID): Foreign Key to `User`.
+  - `User2ID` (uuid.UUID): Foreign Key to `User`.
+  - `CreatedAt`, `UpdatedAt`, `DeletedAt`.
+  - *Relationships*: `User1`, `User2`, `Messages` (has many `Message`).
+
+- **Message** (`models/message.go`):
+  - `ID` (uuid.UUID): Primary Key.
+  - `ConversationID` (uuid.UUID): Foreign Key to `Conversation`.
+  - `SenderID` (uuid.UUID): Foreign Key to `User`.
+  - `Content` (string): Message text.
+  - `Read` (bool): Read status.
+  - `CreatedAt`, `UpdatedAt`, `DeletedAt`.
+  - *Relationships*: `Conversation`, `Sender`.
 
 - **UserUpdatePayload** (`models/user.go` - Used for `PATCH /me`):
   - `Name` (*string)
-  - `Avatar` (*string): New avatar URL path.
   - `Location` (*string)
   - `Phone` (*string)
   - `Bio` (*string)
   - `Interests` (*pq.StringArray): Replaces the entire list if provided.
-  - `Photos` (*pq.StringArray): Represents the *final* list of photo URLs (replaces existing if provided).
-  - `AppendPhotos` ([]string): Internal field to hold newly uploaded photo URLs to add.
+  - *Note*: Photo updates are now handled by dedicated Photo endpoints (`POST /me/photos`, `DELETE /photos/{id}`, `PATCH /photos/{id}/primary`).
 
 - **PetUpdatePayload** (`models/pet.go` - Used for `PUT /pets/:petId`):
   - `Name` (*string)
   - `Type` (*string)
   - `Breed` (*string)
-  - `Age` (*float64)
   - `Gender` (*string)
   - `Weight` (*float64)
   - `Birthday` (*time.Time)
-  - `Avatar` (*string): New avatar URL path.
   - `Bio` (*string)
   - `Personality` (*pq.StringArray): Replaces entire list if provided.
   - `FavoriteActivities` (*pq.StringArray): Replaces entire list if provided.
@@ -146,47 +178,7 @@ Describes the primary data structures used in the application, reflecting the Go
   - `IsMicrochipped` (*bool)
   - `IsVaccinated` (*bool)
   - `IsNeutered` (*bool)
-  - `Photos` (*pq.StringArray): Represents the *final* list of photo URLs (replaces existing if provided).
-  - `AppendPhotos` ([]string): Internal field to hold newly uploaded photo URLs to add.
-
-- **Conversation** (`models/message.go`):
-  - `ID` (uint)
-  - `User1ID` (uint): Foreign Key to `User`.
-  - `User2ID` (uint): Foreign Key to `User`.
-  - `CreatedAt`, `UpdatedAt`, `DeletedAt` (gorm.Model fields).
-  - *Relationships*: `User1`, `User2`, `Messages` (has many `Message`).
-
-- **Message** (`models/message.go`):
-  - `ID` (uint)
-  - `ConversationID` (uint): Foreign Key to `Conversation`.
-  - `SenderID` (uint): Foreign Key to `User`.
-  - `Content` (string): Message text.
-  - `Read` (bool): Read status.
-  - `CreatedAt`, `UpdatedAt`, `DeletedAt` (gorm.Model fields).
-  - *Relationships*: `Conversation`, `Sender`.
-
-- **Match** (`models/match.go` - Potentially used for Recommendations/Connections):
-  - `ID` (uint)
-  - `User1ID` (uint): Foreign Key to `User`.
-  - `User2ID` (uint): Foreign Key to `User`.
-  - `Pet1ID` (uint): Foreign Key to `Pet`.
-  - `Pet2ID` (uint): Foreign Key to `Pet`.
-  - `Percentage` (int): Calculated match score.
-  - `Status` (string): e.g., "pending", "accepted", "rejected".
-  - `CreatedAt`, `UpdatedAt`, `DeletedAt` (gorm.Model fields).
-  - *Relationships*: `User1`, `User2`, `Pet1`, `Pet2`, `MatchReasons` (has many `MatchReason`).
-
-- **MatchReason** (`models/match.go`):
-  - `ID` (uint)
-  - `MatchID` (uint): Foreign Key to `Match`.
-  - `Text` (string): Reason for the match.
-  - `Icon` (string): Optional icon associated with the reason.
-  - `Strength` (int): Strength/importance of the reason (1-5).
-  - `CreatedAt`, `UpdatedAt`, `DeletedAt` (gorm.Model fields).
-  - *Relationships*: `Match`.
-
-- **Connection** (Placeholder - No Go model yet):
-  - `id`, `user1_id` (FK to User), `user2_id` (FK to User), `status` (e.g., pending, accepted, declined, blocked), `requested_by` (user1 or user2), `created_at`, `updated_at`
+  - *Note*: Photo updates are now handled by dedicated Photo endpoints (`POST /pets/{petId}/photos`, `DELETE /photos/{id}`, `PATCH /photos/{id}/primary`).
 
 - **Recommendation** (Placeholder - Likely transient, may not need a persistent table):
   - Data structure TBD based on recommendation logic implementation.
@@ -225,19 +217,25 @@ Defines RESTful endpoints for core resources. `/api/v1` prefix assumed.
 - `PATCH /me` - Update current authenticated user's basic info (name, location etc.)
 - `GET /me/profile` - Get current user's detailed profile
 - `PATCH /me/profile` - Update current user's detailed profile (bio, preferences etc.)
-- `POST /me/avatar` - Upload/Update current user's avatar
 - `GET /me/pets` - List current user's pets
 - `POST /me/pets` - Add a new pet for the current user
 - `GET /me/pets/{petId}` - Get details of a specific pet
 - `PATCH /me/pets/{petId}` - Update a specific pet
 - `DELETE /me/pets/{petId}` - Delete a specific pet
-- `POST /me/pets/{petId}/photos` - Add photo(s) to a specific pet
-- `DELETE /me/pets/{petId}/photos/{photoId}` - Remove a photo from a pet
+- `POST /me/photos` - Upload photo(s) for the current user (use form fields `photos`, `caption`, `isPrimary`). The first photo can be set as primary if `isPrimary=true`.
+- `POST /me/pets/{petId}/photos` - Upload photo(s) for a specific pet (use form fields `photos`, `caption`, `isPrimary`). The first photo can be set as primary if `isPrimary=true`.
 
 **Other Users:**
 - `GET /users/{userId}` - Get basic public info of another user
 - `GET /users/{userId}/profile` - Get detailed public profile of another user
 - `GET /users/{userId}/pets` - List public pets of another user
+- `GET /pets/{petId}/photos` - List photos of a specific pet
+
+**Photos:**
+- `DELETE /photos/{photoId}` - Delete a specific photo (user or pet)
+- `PATCH /photos/{photoId}/primary` - Set a specific photo as the primary/avatar for its owner (user or pet)
+- `PATCH /photos/{photoId}` - (TODO) Update a photo's caption
+- `PUT /owner/{ownerType}/{ownerId}/photos/order` - (TODO) Reorder photos for a user or pet
 
 **Recommendations:**
 - `GET /recommendations` - Get a list of user/pet recommendations
@@ -348,14 +346,15 @@ This checklist tracks the development progress based on the defined requirements
 *   **[DONE]** Frontend: Pet state management for CRUD operations (`petStore.ts` using `/api/v1/pets`).
 *   **[DONE]** Frontend: Basic API service setup (`api.ts`).
 *   **[DONE]** Frontend: Image URL handling for locally served files.
-*   **[DONE]** Backend: User Profile update API (`PATCH /api/v1/me`) - Supports fields & avatar upload (Handler/Service/Repo implemented, route registered).
-*   **[DONE]** Backend: Pet Profile CRUD APIs (`POST, GET, PUT, DELETE /api/v1/pets/:petId`) - Supports fields & photo management (Handler/Service/Repo implemented, routes registered).
+*   **[DONE]** Backend: User Profile update API (`PATCH /api/v1/me`) - Supports updating user fields (Handler/Service/Repo implemented, route registered). User photo uploads are handled by `POST /api/v1/me/photos`.
+*   **[DONE]** Backend: Pet Profile CRUD APIs (`POST /me/pets`, `GET /me/pets`, `GET /me/pets/:petId`, `PUT /me/pets/:petId`, `DELETE /me/pets/:petId`) - Supports managing pet fields (Handler/Service/Repo implemented, routes registered). Pet photo management is handled by `POST /me/pets/:petId/photos` and other `/api/v1/photos/*` endpoints.
+*   **[DONE]** Backend: Photo management APIs (`POST /me/photos`, `POST /me/pets/:petId/photos`, `DELETE /photos/:photoId`, `PATCH /photos/:photoId/primary`) - (Handler/Service/Repo implemented, routes registered).
 *   **[DONE]** Backend: Static file serving configured for `/uploads/*`.
-*   **[ ]** Backend: Implement `GET /api/v1/pets/:petId` endpoint (missing).
-*   **[ ]** Database: Write and test database seeding script.
+*   **[DONE]** Backend: Implement `GET /api/v1/me/pets/:petId` endpoint.
+*   **[DONE]** Database: Write and test database seeding script.
 *   **[ ]** Testing: End-to-end testing for User/Pet Profile CRUD operations (including images, edge cases, validation).
-*   **[Optional Refactor]** Backend: Move `GET /api/v1/me` logic from `main.go` to `user_handler.go`.
-*   **[Optional Refactor]** Backend/Frontend: Align Pet API paths to `/me/pets/*` instead of `/api/v1/pets/*`.
+*   **[DONE]** Backend: Move `GET /api/v1/me` logic from `main.go` to `user_handler.go`.
+*   **[DONE]** Backend/Frontend: Align Pet API paths to `/me/pets/*` instead of `/api/v1/pets/*`.
 
 **Phase 2: Matching & Connections**
 

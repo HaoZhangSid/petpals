@@ -45,20 +45,25 @@ func Connect() error {
 	return nil
 }
 
-// 迁移数据库模型
+// migrateModels 迁移所有必要的数据库模型
 func migrateModels() error {
-	log.Println("Running database migrations")
+	log.Println("Running database auto-migration check")
 
 	err := DB.AutoMigrate(
 		&models.User{},
 		&models.Pet{},
+		&models.Photo{},
+		&models.Connection{},
+		&models.Conversation{},
+		&models.Message{},
+		// Add other models here if they are created
 	)
 
 	if err != nil {
-		log.Printf("Migration failed: %v", err)
+		log.Printf("Auto-migration failed: %v", err)
 		return err
 	}
 
-	log.Println("Database migration completed successfully")
+	log.Println("Database auto-migration check completed successfully")
 	return nil
 }
