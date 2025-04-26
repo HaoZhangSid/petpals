@@ -84,12 +84,50 @@ func (r *postgresPetRepository) GetPetsByUserID(ctx context.Context, userID uuid
 
 // UpdatePet updates an existing pet record in the database
 func (r *postgresPetRepository) UpdatePet(ctx context.Context, pet *models.Pet) error {
-	// TODO: Implement UpdatePet logic
-	panic("UpdatePet not implemented")
+	// Ensure the pet ID is valid before attempting update
+	if pet.ID == uuid.Nil {
+		return fmt.Errorf("cannot update pet with nil ID")
+	}
+
+	// Use GORM's Save method for updates (updates all fields based on primary key)
+	// Alternatively, use Updates with specific fields if needed.
+	result := r.db.WithContext(ctx).Save(pet)
+
+	if result.Error != nil {
+		return fmt.Errorf("error updating pet %s in database: %w", pet.ID, result.Error)
+	}
+
+	// Check if any row was actually affected. If ID doesn't exist, Save might not error but RowsAffected will be 0.
+	if result.RowsAffected == 0 {
+		// It's debatable whether this should be an error.
+		// GORM's Save might not return ErrRecordNotFound in this case.
+		// Let's treat it as "not found" for clarity.
+		return fmt.Errorf("pet with ID %s not found for update", pet.ID) // Or return gorm.ErrRecordNotFound?
+	}
+
+	return nil
 }
 
 // DeletePet removes a pet record from the database by its ID
 func (r *postgresPetRepository) DeletePet(ctx context.Context, petID uuid.UUID) error {
-	// TODO: Implement DeletePet logic
-	panic("DeletePet not implemented")
+	// Ensure the pet ID is valid before attempting delete
+	if petID == uuid.Nil {
+		return fmt.Errorf("cannot delete pet with nil ID")
+	}
+
+	// Use GORM's Delete method
+	// We pass a pointer to an empty Pet struct with the ID set
+	// GORM uses this to identify the record to delete by primary key
+	result := r.db.WithContext(ctx).Delete(&models.Pet{ID: petID})
+
+	if result.Error != nil {
+		return fmt.Errorf("error deleting pet %s from database: %w", petID, result.Error)
+	}
+
+	// Check if any row was actually affected. If ID doesn't exist, Delete returns RowsAffected = 0 but no error.
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("pet with ID %s not found for deletion", petID) // Or return gorm.ErrRecordNotFound?
+	}
+
+	return nil
 }
