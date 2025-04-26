@@ -140,7 +140,7 @@ const Profile = () => {
 
         <UserProfileInfo user={user} pets={pets} onStartEdit={handleStartEditUser} />
 
-        <UserPhotosSection />
+        <UserPhotosSection onStartEdit={handleStartEditPhotos} />
 
         <MyPetsSection
           openAddPetModal={openAddPetModal}

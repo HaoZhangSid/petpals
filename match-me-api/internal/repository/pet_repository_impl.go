@@ -42,14 +42,44 @@ func (r *postgresPetRepository) GetPetByID(ctx context.Context, petID uuid.UUID)
 
 // CreatePet adds a new pet record to the database
 func (r *postgresPetRepository) CreatePet(ctx context.Context, pet *models.Pet) error {
-	// TODO: Implement CreatePet logic
-	panic("CreatePet not implemented")
+	// Ensure pet has a new UUID if not already assigned (GORM might handle this automatically with BeforeCreate hook, but explicit is safer)
+	if pet.ID == uuid.Nil {
+		pet.ID = uuid.New()
+	}
+
+	// Use GORM's Create method within the context
+	result := r.db.WithContext(ctx).Create(pet)
+
+	if result.Error != nil {
+		// Provide a more specific error message
+		return fmt.Errorf("error creating pet in database: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		// This case might indicate an issue, although Create usually returns error if it fails
+		return fmt.Errorf("failed to create pet, no rows affected")
+	}
+
+	// Return nil on success
+	return nil
 }
 
 // GetPetsByUserID retrieves all pets belonging to a specific user
 func (r *postgresPetRepository) GetPetsByUserID(ctx context.Context, userID uuid.UUID) ([]models.Pet, error) {
-	// TODO: Implement GetPetsByUserID logic
-	panic("GetPetsByUserID not implemented")
+	var pets []models.Pet
+
+	// Query the database for pets matching the userID
+	// Use .WithContext for cancellation support
+	// Order by creation time or name, for example
+	result := r.db.WithContext(ctx).Where("user_id = ?", userID).Order("created_at ASC").Find(&pets)
+
+	if result.Error != nil {
+		// Return an empty slice and the error if the query fails
+		return nil, fmt.Errorf("error fetching pets for user %s: %w", userID, result.Error)
+	}
+
+	// Return the slice of pets (can be empty if user has no pets)
+	return pets, nil
 }
 
 // UpdatePet updates an existing pet record in the database

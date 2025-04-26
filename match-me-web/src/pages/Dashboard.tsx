@@ -399,9 +399,10 @@ const Dashboard = () => {
               {pets.map(pet => {
                 // Construct the full image URL
                 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-                const imageUrl = pet.avatar?.startsWith('/uploads/') 
-                                  ? `${apiBaseUrl}${pet.avatar}` 
-                                  : pet.avatar || '/placeholder-pet.png'; // Use placeholder if avatar is null/empty
+                // Use pet.avatarUrl and type-specific placeholder
+                const imageUrl = pet.avatarUrl?.startsWith('/uploads/') 
+                                  ? `${apiBaseUrl}${pet.avatarUrl}` 
+                                  : pet.avatarUrl || (pet.type?.toLowerCase() === 'cat' ? '/placeholder-cat.png' : '/placeholder-dog.png');
                 
                 return (
                   <div key={pet.id} className="bg-gradient-to-br from-white to-gray-50 p-4 rounded-xl border border-gray-100 hover:shadow-md transition duration-300 group">
@@ -412,9 +413,9 @@ const Dashboard = () => {
                           src={imageUrl} 
                           alt={pet.name} 
                           className="w-full h-full object-cover" 
-                          onError={(e) => { // Add error handling
+                          onError={(e) => { // Add error handling with type-specific placeholder
                              const target = e.target as HTMLImageElement;
-                             target.src = '/placeholder-pet.png'; // Fallback placeholder
+                             target.src = pet.type?.toLowerCase() === 'cat' ? '/placeholder-cat.png' : '/placeholder-dog.png';
                              target.onerror = null; 
                           }}
                         />

@@ -395,17 +395,19 @@ const PetProfileForm: React.FC<PetProfileFormProps> = ({
   const renderBasicInfoStep = () => {
     // Calculate the correct URL to display for the avatar preview
     const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-    let displayImageUrl = '/placeholder-pet.png'; // Default placeholder
+    // Default placeholder based on type
+    let displayImageUrl = formData.type?.toLowerCase() === 'cat' ? '/placeholder-cat.png' : '/placeholder-dog.png'; 
     
-    if (formData.avatar) {
+    // TODO: This logic needs updating to use avatarUrl and avatarFile correctly
+    // For now, just fix the placeholder reference if formData.avatar logic remains
+    if (formData.avatar) { 
       if (formData.avatar.startsWith('/uploads/')) {
         displayImageUrl = `${apiBaseUrl}${formData.avatar}`;
       } else {
         displayImageUrl = formData.avatar; // Assume Data URL or full URL
       }
-    } else {
-       displayImageUrl = formData.type === 'Dog' ? '/placeholder-dog.png' : '/placeholder-cat.png';
     }
+    // If no formData.avatar, the type-based placeholder from above is used
 
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
@@ -418,7 +420,8 @@ const PetProfileForm: React.FC<PetProfileFormProps> = ({
               onClick={handleAvatarClick}
               onError={(e) => { 
                   const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder-pet.png'; 
+                  // Use type-specific placeholder on error
+                  target.src = formData.type?.toLowerCase() === 'cat' ? '/placeholder-cat.png' : '/placeholder-dog.png'; 
                   target.onerror = null; 
               }}
             />

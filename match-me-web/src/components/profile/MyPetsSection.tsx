@@ -1,20 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePetStore } from '../../store/petStore';
 import { useUserStore } from '../../store/userStore';
 import { Pet } from '../../types';
 import PetProfileForm from './PetProfileForm';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { useModal } from '../../contexts/ModalContext';
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface MyPetsSectionProps {
-  openAddPetModal: () => void;
-  openLightbox: (index: number) => void;
+  // Remove openAddPetModal prop, get from useModal hook instead
+  // openAddPetModal: () => void;
+  // Remove openLightbox prop - it wasn't used
+  // openLightbox: (index: number) => void;
 }
 
 // Define API base URL directly for now to avoid import.meta.env issues
 const API_BASE_URL = 'http://localhost:8080';
 
-const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLightbox }) => {
+const MyPetsSection: React.FC = () => {
   // --- State and Store Logic ---
   const user = useUserStore(state => state.user);
   const isInitializing = useUserStore(state => state.isInitializing);
@@ -26,89 +31,91 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
     fetchPets,
     setActivePet,
     deletePet,
-    updatePet,
   } = usePetStore();
 
-  const [editingPet, setEditingPet] = useState<Pet | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  // Get modal functions from context
+  const { openAddPetModal, openEditPetModal } = useModal();
 
+  // --- State for Active Pet Image --- 
+  const [profileImageUrl, setProfileImageUrl] = useState('/placeholder-dog.png');
+
+  // --- Ref to track if fetch has occurred ---
+  const hasFetchedPets = useRef(false);
+
+  // --- Effects ---
   useEffect(() => {
-    if (!isInitializing && user) {
-      console.log("MyPetsSection mounted or user/init changed, fetching pets...");
+    // Log dependency values and fetch status on every run
+    console.log(`[MyPetsSection useEffect Check] isInitializing=${isInitializing}, user exists=${!!user}, hasFetched=${hasFetchedPets.current}`);
+
+    // Only fetch if condition is met AND we haven't fetched before
+    if (!isInitializing && user && !hasFetchedPets.current) {
+      console.log(`[MyPetsSection useEffect Action] Condition met AND first fetch! Running fetchPets.`);
       fetchPets();
+      hasFetchedPets.current = true; // Set the flag to true after calling fetch
     }
-  }, [isInitializing, user, fetchPets]);
+  }, [isInitializing, user, fetchPets]); // Keep dependencies to run check when they change
+
+  // Effect to update profileImageUrl when activePet changes
+  useEffect(() => {
+    if (activePet) {
+      const url = activePet.avatarUrl?.startsWith('/uploads/')
+        ? `${API_BASE_URL}${activePet.avatarUrl}`
+        : activePet.avatarUrl;
+      setProfileImageUrl(url || (activePet.type?.toLowerCase() === 'cat' ? '/placeholder-cat.png' : '/placeholder-dog.png'));
+    } else {
+      setProfileImageUrl('/placeholder-dog.png'); // Default if no active pet
+    }
+  }, [activePet]); // Dependency array includes activePet
 
   // --- Event Handlers ---
-  const handleStartEditPet = (petToEdit: Pet) => {
-    setEditingPet(petToEdit);
-  };
+  // Remove handleStartEditPet, handleCancelEditPet, handleSavePetProfile
 
-  const handleCancelEditPet = () => {
-    setEditingPet(null);
-  };
-
-  const handleSavePetProfile = async (formData: FormData) => {
-    const petId = editingPet?.id;
-    if (!petId) {
-      console.error("Cannot save pet profile: editingPet or its ID is null.");
-      return;
-    }
-
-    setIsSaving(true);
-    setSaveSuccess(null);
-    try {
-      await updatePet(petId, formData);
-      setSaveSuccess("Pet profile updated successfully!");
-      setEditingPet(null);
-      setTimeout(() => setSaveSuccess(null), 3000);
-    } catch (error) {
-      console.error("Failed to save pet profile:", error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
+  // Use openAddPetModal directly from context
   const handleAddNewPet = () => {
     openAddPetModal();
   };
 
-  const handleDeletePetConfirm = async (petId: string) => {
-    setIsSaving(true);
-    try {
-      await deletePet(petId);
-      setShowDeleteConfirm(null);
-      if (activePet?.id === petId) {
-          setActivePet(null);
-      }
-    } catch (error) {
-      console.error("Failed to delete pet:", error);
-    } finally {
-      setIsSaving(false);
-    }
+  // Revised delete handler using toast confirmation
+  const handleDeletePet = (petToDelete: Pet) => {
+    if (!petToDelete) return;
+
+    toast((t) => (
+      <div className="flex flex-col items-center p-2">
+        <p className="mb-3 text-center text-sm font-medium">Delete {petToDelete.name}? This cannot be undone.</p>
+        <div className="flex space-x-3">
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await deletePet(petToDelete.id);
+                toast.success(`${petToDelete.name} deleted successfully!`);
+                // setActivePet is handled inside deletePet action in store
+              } catch (error) {
+                toast.error(`Failed to delete ${petToDelete.name}.`);
+                console.error("Delete pet error:", error);
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white text-xs rounded-md hover:bg-red-700 font-semibold"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-md hover:bg-gray-300 font-semibold"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 6000, // Keep toast open longer for confirmation
+    });
   };
 
   // --- Rendering ---
   return (
     <>
       <h2 className="text-xl font-bold text-purple-700 mb-4">My Pets</h2>
-
-      {/* ... (AnimatePresence for saveSuccess) ... */}
-      <AnimatePresence>
-        {saveSuccess && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-center"
-          >
-            <span className="mr-2">✅</span>
-            {saveSuccess}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {isLoadingPets && <div className="text-center py-4">Loading pets...</div>}
       {petError && <div className="text-center py-4 text-red-600">Error loading pets: {petError}</div>}
@@ -118,7 +125,7 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
           {Array.isArray(pets) && pets.map(pet => {
             const tabImageUrl = pet.avatarUrl?.startsWith('/uploads/')
                                 ? `${API_BASE_URL}${pet.avatarUrl}`
-                                : pet.avatarUrl || '/placeholder-pet.png';
+                                : pet.avatarUrl || (pet.type?.toLowerCase() === 'cat' ? '/placeholder-cat.png' : '/placeholder-dog.png');
 
             return (
               <button
@@ -132,7 +139,7 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                   className={`w-12 h-12 rounded-full border-2 bg-gray-200 object-cover ${activePet?.id === pet.id ? 'border-softpink' : 'border-transparent'}`}
                   onError={(e) => {
                      const target = e.target as HTMLImageElement;
-                     target.src = '/placeholder-pet.png';
+                     target.src = pet.type?.toLowerCase() === 'cat' ? '/placeholder-cat.png' : '/placeholder-dog.png';
                      target.onerror = null;
                   }}
                 />
@@ -163,37 +170,34 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                   <h2 className="text-xl font-bold text-purple-700">{activePet.name}'s Profile</h2>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handleStartEditPet(activePet)}
-                      className="text-skyblue hover:text-blue-600 text-lg"
+                      // Update onClick to use openEditPetModal from context
+                      onClick={() => openEditPetModal(activePet)} 
+                      className="p-1.5 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
+                      title="Edit Pet Profile"
                     >
-                      ✏️
+                      <PencilIcon className="h-5 w-5" />
                     </button>
                     <button
-                      onClick={() => setShowDeleteConfirm(activePet.id)}
-                      className="text-red-500 hover:text-red-600 text-lg"
+                      // Update onClick to call the new handleDeletePet
+                      onClick={() => handleDeletePet(activePet)} 
+                      className="p-1.5 text-red-600 hover:bg-red-100 rounded-full transition-colors"
+                      title="Delete Pet"
                     >
-                      🗑️
+                      <TrashIcon className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
                 <div className="text-center mb-6">
-                  {(() => {
-                    const profileImageUrl = activePet.avatarUrl?.startsWith('/uploads/')
-                                          ? `${API_BASE_URL}${activePet.avatarUrl}`
-                                          : activePet.avatarUrl || '/placeholder-pet.png';
-                    return (
-                      <img
-                        src={profileImageUrl}
-                        alt={activePet.name}
-                        className="w-32 h-32 rounded-full mx-auto mb-3 border-4 border-softpink bg-gray-200 object-cover"
-                        onError={(e) => {
-                           const target = e.target as HTMLImageElement;
-                           target.src = '/placeholder-pet.png';
-                           target.onerror = null;
-                        }}
-                      />
-                    );
-                  })()}
+                  <img
+                    src={profileImageUrl}
+                    alt={activePet.name}
+                    className="w-32 h-32 rounded-full mx-auto mb-3 border-4 border-softpink bg-gray-200 object-cover"
+                    onError={() => {
+                       console.log(`Error loading ${profileImageUrl}, falling back to placeholder.`);
+                       // Set state to the appropriate placeholder
+                       setProfileImageUrl(activePet.type?.toLowerCase() === 'cat' ? '/placeholder-cat.png' : '/placeholder-dog.png');
+                    }}
+                  />
                   <h3 className="font-bold text-lg text-purple-700">{activePet.name}</h3>
                   <p className="text-gray-600 text-sm">
                     {activePet.type || 'Pet'} • {activePet.breed || 'Breed not set'}
@@ -246,7 +250,7 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-purple-700">Favorite Activities</h2>
                   <button
-                    onClick={() => handleStartEditPet(activePet)}
+                    onClick={() => openEditPetModal(activePet)}
                     className="text-skyblue hover:text-blue-600 text-lg"
                   >
                     ✏️
@@ -270,7 +274,7 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                     <div className="text-gray-300 text-5xl mb-4">🐾</div>
                     <p className="text-gray-500 text-sm text-center mb-4">No activities added yet</p>
                     <button
-                      onClick={() => handleStartEditPet(activePet)}
+                      onClick={() => openEditPetModal(activePet)}
                       className="px-4 py-1.5 bg-softpink text-white rounded-full text-sm hover:bg-pink-400 transition"
                     >
                       Add Activities
@@ -287,7 +291,7 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-purple-700">About {activePet.name}</h2>
                 <button
-                  onClick={() => handleStartEditPet(activePet)}
+                  onClick={() => openEditPetModal(activePet)}
                   className="text-skyblue hover:text-blue-600 text-lg"
                 >
                   ✏️
@@ -301,7 +305,7 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                 <div className="py-4 flex flex-col items-center justify-center">
                   <p className="text-gray-500 text-sm text-center mb-3">No bio added yet for this pet.</p>
                   <button
-                    onClick={() => handleStartEditPet(activePet)}
+                    onClick={() => openEditPetModal(activePet)}
                     className="px-4 py-1.5 bg-lavender bg-opacity-10 text-purple-700 rounded-full text-xs hover:bg-opacity-25 transition"
                   >
                     + Add Bio
@@ -358,45 +362,12 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
           </div>
       )}
 
-      {/* Modals related to pet editing/deleting */}
-      <AnimatePresence>
-        {editingPet && ( <PetProfileForm pet={editingPet} mode="edit" onSubmit={handleSavePetProfile} onCancel={handleCancelEditPet} /> )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-xl p-6 max-w-md w-full"
-            >
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Delete Pet</h3>
-              <p className="text-gray-600 mb-6">Are you sure you want to delete this pet? This action cannot be undone.</p>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowDeleteConfirm(null)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDeletePetConfirm(showDeleteConfirm)}
-                  disabled={isSaving}
-                  className={`px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isSaving ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Remove the old AnimatePresence blocks for editingPet and showDeleteConfirm modals */}
+      {/* These are now handled by ModalContext */}
+      {/* <AnimatePresence> ... </AnimatePresence> */}
+      {/* <AnimatePresence> ... </AnimatePresence> */}
+
+      {/* Keep the style tag if needed */}
       <style>
         {`.hide-scrollbar {
           -ms-overflow-style: none;

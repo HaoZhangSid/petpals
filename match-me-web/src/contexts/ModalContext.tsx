@@ -3,6 +3,7 @@ import { Pet } from '../types';
 import PetProfileForm from '../components/profile/PetProfileForm';
 import { usePetStore } from '../store/petStore';
 import { api } from '../services/api';
+import { toast } from 'react-hot-toast';
 
 // Helper function to append data to FormData, handling null/undefined and booleans
 const appendToFormData = (formData: FormData, key: string, value: any) => {
@@ -30,6 +31,10 @@ interface ModalContextType {
   isAddPetModalOpen: boolean;
   openAddPetModal: () => void;
   closeAddPetModal: () => void;
+  isEditPetModalOpen: boolean;
+  editingPetData: Pet | null;
+  openEditPetModal: (pet: Pet) => void;
+  closeEditPetModal: () => void;
 }
 
 // Create the context
@@ -42,12 +47,24 @@ interface ModalProviderProps {
 
 export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const [isAddPetModalOpen, setIsAddPetModalOpen] = useState(false);
+  const [isEditPetModalOpen, setIsEditPetModalOpen] = useState(false);
+  const [editingPetData, setEditingPetData] = useState<Pet | null>(null);
+
   const addPetToStore = usePetStore(state => state.addPet);
+  const updatePetInStore = usePetStore(state => state.updatePet);
   
   const openAddPetModal = () => setIsAddPetModalOpen(true);
   const closeAddPetModal = () => setIsAddPetModalOpen(false);
   
-  // Update the function signature to accept FormData directly
+  const openEditPetModal = (pet: Pet) => {
+    setEditingPetData(pet);
+    setIsEditPetModalOpen(true);
+  };
+  const closeEditPetModal = () => {
+    setIsEditPetModalOpen(false);
+    setEditingPetData(null);
+  };
+  
   const handleAddPet = async (formData: FormData) => {
     console.log("FormData received by handleAddPet in ModalContext:");
     for (let [key, value] of formData.entries()) {
@@ -55,27 +72,43 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     }
 
     try {
-      // Send the received FormData directly using api.post
-      const response = await api.post('/api/v1/pets', formData, {
+      const response = await api.post('/api/v1/me/pets', formData, { 
           headers: {
-            // Axios usually sets this automatically for FormData
             'Content-Type': 'multipart/form-data',
           },
       });
 
       const createdPet: Pet = response.data;
-      console.log('>>> Pet created successfully (API Response):', createdPet); // <--- 添加这行日志
+      console.log('>>> Pet created successfully (API Response):', createdPet);
 
       if (addPetToStore) {
         addPetToStore(createdPet);
       }
+      toast.success("Pet added successfully!");
       closeAddPetModal();
 
     } catch (error: any) {
       const errMsg = error.response?.data?.error || error.message || 'Network Error';
-      // Log the full error for more details
       console.error('Failed to add pet:', error.response || error);
-      alert(`Failed to add pet: ${errMsg}`);
+      toast.error(`Failed to add pet: ${errMsg}`);
+    }
+  };
+  
+  const handleUpdatePet = async (formData: FormData) => {
+    if (!editingPetData || !editingPetData.id) {
+      console.error("Cannot update pet: No pet data available for editing.");
+      toast.error("An error occurred. Please try again.");
+      return;
+    }
+    const petId = editingPetData.id;
+    try {
+      await updatePetInStore(petId, formData);
+      toast.success("Pet profile updated successfully!");
+      closeEditPetModal();
+    } catch (error: any) {
+      const errMsg = error.response?.data?.error || error.message || 'Network Error';
+      console.error('Failed to update pet:', error.response || error);
+      toast.error(`Failed to update pet: ${errMsg}`);
     }
   };
   
@@ -85,16 +118,28 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
         isAddPetModalOpen,
         openAddPetModal,
         closeAddPetModal,
+        isEditPetModalOpen,
+        editingPetData,
+        openEditPetModal,
+        closeEditPetModal,
       }}
     >
       {children}
       
-      {/* 使用PetProfileForm替代AddPetModal */}
       {isAddPetModalOpen && (
         <PetProfileForm 
           mode="create"
           onSubmit={handleAddPet}
           onCancel={closeAddPetModal}
+        />
+      )}
+      
+      {isEditPetModalOpen && editingPetData && (
+        <PetProfileForm 
+          mode="edit"
+          pet={editingPetData}
+          onSubmit={handleUpdatePet}
+          onCancel={closeEditPetModal}
         />
       )}
     </ModalContext.Provider>

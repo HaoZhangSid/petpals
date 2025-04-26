@@ -36,7 +36,7 @@ export const usePetStore = create<PetState>((set, get) => ({
   fetchPets: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.get('/api/v1/pets');
+      const response = await api.get('/api/v1/me/pets');
       const fetchedPets: Pet[] = response.data;
 
       set({
@@ -73,13 +73,11 @@ export const usePetStore = create<PetState>((set, get) => ({
     }
 
     try {
-      // Send FormData with PUT request (matching backend handler)
-      const response = await api.put(`/api/v1/pets/${id}`, formData, {
-        // Ensure correct Content-Type header for FormData
-        // Axios usually handles this automatically for FormData, but good to be aware
-         headers: {
-           'Content-Type': 'multipart/form-data' 
-         }
+      // Use the authenticated endpoint for updating user's pet
+      const response = await api.put(`/api/v1/me/pets/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data' 
+        }
       });
       
       const updatedPet = response.data;
@@ -103,7 +101,8 @@ export const usePetStore = create<PetState>((set, get) => ({
   deletePet: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
-      await api.delete(`/api/v1/pets/${id}`);
+      // Use the authenticated endpoint for deleting user's pet
+      await api.delete(`/api/v1/me/pets/${id}`);
       set((state) => ({
         pets: state.pets.filter(pet => pet.id !== id),
         activePet: state.activePet?.id === id ? (state.pets.find(p => p.id !== id) ?? null) : state.activePet, // Find next available pet or null

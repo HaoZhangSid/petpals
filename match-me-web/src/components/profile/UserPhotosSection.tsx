@@ -10,8 +10,10 @@ import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/outline';
 import Lightbox from '../common/Lightbox';
 import { toast } from 'react-hot-toast';
 
+// Re-introduce Props to receive the edit handler
 interface UserPhotosSectionProps {
-  user: User;
+  // Remove user prop - component gets it from store
+  // user: User;
   onStartEdit: () => void;
 }
 
@@ -142,7 +144,7 @@ const PhotoItem: React.FC<PhotoItemProps> = ({
   );
 };
 
-const UserPhotosSection: React.FC = () => {
+const UserPhotosSection: React.FC<UserPhotosSectionProps> = ({ onStartEdit }) => {
   // Access store state and actions
   const user = useUserStore(state => state.user);
   const photos = useUserStore(state => state.user?.photos) || [];
@@ -176,7 +178,18 @@ const UserPhotosSection: React.FC = () => {
 
   return (
     <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800">Photos ({photos.length})</h3>
+      {/* Header with Title and Edit Button */}
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">Photos ({photos.length})</h3>
+        <button 
+          onClick={onStartEdit} 
+          className="p-1.5 text-purple-600 hover:bg-purple-100 rounded-full transition-colors"
+          title="Add/Edit Photos"
+        >
+           <PencilIcon className="h-5 w-5" />
+        </button>
+      </div>
+
       {photos.length === 0 ? (
         <p className="text-gray-500">No photos uploaded yet.</p>
       ) : (

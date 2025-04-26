@@ -341,7 +341,7 @@ This checklist tracks the development progress based on the defined requirements
 
 *   **[DONE]** Frontend: User Profile display and basic edit form structure (`Profile.tsx`, `UserProfileInfo`, `UserProfileForm`).
 *   **[DONE]** Frontend: User Photos display and basic edit form structure (`UserPhotosSection`, `UserPhotosForm`).
-*   **[DONE]** Frontend: Pet Profile display (`MyPetsSection`) and basic add/edit form structure (`PetProfileForm`).
+*   **[ ]** Frontend: Pet Profile display (`MyPetsSection`) and basic add/edit form structure (`PetProfileForm`).
 *   **[DONE]** Frontend: User state management for profile updates (`userStore.ts`).
 *   **[DONE]** Frontend: Pet state management for CRUD operations (`petStore.ts` using `/api/v1/pets`).
 *   **[DONE]** Frontend: Basic API service setup (`api.ts`).
