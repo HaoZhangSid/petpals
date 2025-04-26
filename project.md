@@ -75,15 +75,127 @@ Users can manage multiple pet profiles and modify any profile information at any
 - Event categories (walks, training, meetups, charity)
 - Event capacity management
 
-## Data Models (High-Level)
+## Data Models (Based on Go Code)
 
-- **User**: `id`, `name`, `email`, `password_hash`, `location`, `bio`, `avatar_url`, `preferences` (e.g., activity types, distance), `created_at`, `updated_at`
-- **Pet**: `id`, `owner_id` (FK to User), `name`, `type` (e.g., dog, cat), `breed`, `age`, `personality_traits` (array/tags), `photos_urls` (array), `special_needs`, `activity_preferences`, `created_at`, `updated_at`
-- **Connection**: `id`, `user1_id` (FK to User), `user2_id` (FK to User), `status` (e.g., pending, accepted, declined, blocked), `requested_by` (user1 or user2), `created_at`, `updated_at`
-- **Message**: `id`, `connection_id` (FK to Connection), `sender_id` (FK to User), `content`, `sent_at`, `read_status`
-- **Recommendation**: (Likely transient, generated on demand, may not need a persistent table)
-- **Event**: (If implemented) `id`, `creator_id` (FK to User), `title`, `description`, `location`, `start_time`, `end_time`, `category`, `capacity`, `created_at`
-- **EventRSVP**: (If implemented) `id`, `event_id` (FK to Event), `user_id` (FK to User), `status` (attending, maybe, declined), `created_at`
+Describes the primary data structures used in the application, reflecting the Go `internal/models` definitions.
+
+- **User** (`models/user.go`):
+  - `ID` (uuid.UUID): Primary Key.
+  - `Name` (string): User's full name.
+  - `Email` (string): Unique email address.
+  - `Password` (string): Hashed password (excluded from JSON output).
+  - `Avatar` (string): URL path to the user's avatar image (e.g., `/uploads/...`).
+  - `Location` (string): User's location (e.g., city, neighborhood).
+  - `Phone` (string): User's phone number.
+  - `Bio` (string): User's 'About Me' description.
+  - `Interests` (pq.StringArray): Array of user's interests.
+  - `Photos` (pq.StringArray): Array of URL paths to user's photos.
+  - `CreatedAt` (time.Time): Timestamp of creation.
+  - `UpdatedAt` (time.Time): Timestamp of last update.
+  - *Relationships*: `Pets` (has many `Pet`).
+
+- **Pet** (`models/pet.go`):
+  - `ID` (uuid.UUID): Primary Key.
+  - `UserID` (uuid.UUID): Foreign Key to `User` (Owner).
+  - `Name` (string): Pet's name.
+  - `Type` (string): Type of pet (e.g., "dog", "cat").
+  - `Breed` (*string): Pet's breed.
+  - `Age` (*float64): Pet's age (in years, allows fractions).
+  - `Gender` (*string): Pet's gender.
+  - `Weight` (*float64): Pet's weight.
+  - `Birthday` (*time.Time): Pet's date of birth.
+  - `Avatar` (*string): URL path to the pet's primary photo.
+  - `Bio` (*string): Description or notes about the pet.
+  - `Photos` (pq.StringArray): Array of URL paths to additional pet photos.
+  - `Personality` (pq.StringArray): Array of personality traits (e.g., "playful", "calm").
+  - `FavoriteActivities` (pq.StringArray): Array of pet's favorite activities.
+  - `PlayStyle` (pq.StringArray): Array describing pet's play style.
+  - `ActivityLevel` (*string): Pet's general activity level (e.g., "high", "medium", "low").
+  - `IsMicrochipped` (*bool): Microchip status.
+  - `IsVaccinated` (*bool): Vaccination status.
+  - `IsNeutered` (*bool): Neutered/spayed status.
+  - `CreatedAt` (time.Time): Timestamp of creation.
+  - `UpdatedAt` (time.Time): Timestamp of last update.
+  - `DeletedAt` (gorm.DeletedAt): Timestamp for soft delete.
+  - *Relationships*: `User` (belongs to `User`).
+
+- **UserUpdatePayload** (`models/user.go` - Used for `PATCH /me`):
+  - `Name` (*string)
+  - `Avatar` (*string): New avatar URL path.
+  - `Location` (*string)
+  - `Phone` (*string)
+  - `Bio` (*string)
+  - `Interests` (*pq.StringArray): Replaces the entire list if provided.
+  - `Photos` (*pq.StringArray): Represents the *final* list of photo URLs (replaces existing if provided).
+  - `AppendPhotos` ([]string): Internal field to hold newly uploaded photo URLs to add.
+
+- **PetUpdatePayload** (`models/pet.go` - Used for `PUT /pets/:petId`):
+  - `Name` (*string)
+  - `Type` (*string)
+  - `Breed` (*string)
+  - `Age` (*float64)
+  - `Gender` (*string)
+  - `Weight` (*float64)
+  - `Birthday` (*time.Time)
+  - `Avatar` (*string): New avatar URL path.
+  - `Bio` (*string)
+  - `Personality` (*pq.StringArray): Replaces entire list if provided.
+  - `FavoriteActivities` (*pq.StringArray): Replaces entire list if provided.
+  - `PlayStyle` (*pq.StringArray): Replaces entire list if provided.
+  - `ActivityLevel` (*string)
+  - `IsMicrochipped` (*bool)
+  - `IsVaccinated` (*bool)
+  - `IsNeutered` (*bool)
+  - `Photos` (*pq.StringArray): Represents the *final* list of photo URLs (replaces existing if provided).
+  - `AppendPhotos` ([]string): Internal field to hold newly uploaded photo URLs to add.
+
+- **Conversation** (`models/message.go`):
+  - `ID` (uint)
+  - `User1ID` (uint): Foreign Key to `User`.
+  - `User2ID` (uint): Foreign Key to `User`.
+  - `CreatedAt`, `UpdatedAt`, `DeletedAt` (gorm.Model fields).
+  - *Relationships*: `User1`, `User2`, `Messages` (has many `Message`).
+
+- **Message** (`models/message.go`):
+  - `ID` (uint)
+  - `ConversationID` (uint): Foreign Key to `Conversation`.
+  - `SenderID` (uint): Foreign Key to `User`.
+  - `Content` (string): Message text.
+  - `Read` (bool): Read status.
+  - `CreatedAt`, `UpdatedAt`, `DeletedAt` (gorm.Model fields).
+  - *Relationships*: `Conversation`, `Sender`.
+
+- **Match** (`models/match.go` - Potentially used for Recommendations/Connections):
+  - `ID` (uint)
+  - `User1ID` (uint): Foreign Key to `User`.
+  - `User2ID` (uint): Foreign Key to `User`.
+  - `Pet1ID` (uint): Foreign Key to `Pet`.
+  - `Pet2ID` (uint): Foreign Key to `Pet`.
+  - `Percentage` (int): Calculated match score.
+  - `Status` (string): e.g., "pending", "accepted", "rejected".
+  - `CreatedAt`, `UpdatedAt`, `DeletedAt` (gorm.Model fields).
+  - *Relationships*: `User1`, `User2`, `Pet1`, `Pet2`, `MatchReasons` (has many `MatchReason`).
+
+- **MatchReason** (`models/match.go`):
+  - `ID` (uint)
+  - `MatchID` (uint): Foreign Key to `Match`.
+  - `Text` (string): Reason for the match.
+  - `Icon` (string): Optional icon associated with the reason.
+  - `Strength` (int): Strength/importance of the reason (1-5).
+  - `CreatedAt`, `UpdatedAt`, `DeletedAt` (gorm.Model fields).
+  - *Relationships*: `Match`.
+
+- **Connection** (Placeholder - No Go model yet):
+  - `id`, `user1_id` (FK to User), `user2_id` (FK to User), `status` (e.g., pending, accepted, declined, blocked), `requested_by` (user1 or user2), `created_at`, `updated_at`
+
+- **Recommendation** (Placeholder - Likely transient, may not need a persistent table):
+  - Data structure TBD based on recommendation logic implementation.
+
+- **Event** (Placeholder - Optional V2 Feature):
+  - `id`, `creator_id` (FK to User), `title`, `description`, `location`, `start_time`, `end_time`, `category`, `capacity`, `created_at`
+
+- **EventRSVP** (Placeholder - Optional V2 Feature):
+  - `id`, `event_id` (FK to Event), `user_id` (FK to User), `status` (attending, maybe, declined), `created_at`
 
 ## Technical Requirements
 
@@ -233,14 +345,17 @@ This checklist tracks the development progress based on the defined requirements
 *   **[DONE]** Frontend: User Photos display and basic edit form structure (`UserPhotosSection`, `UserPhotosForm`).
 *   **[DONE]** Frontend: Pet Profile display (`MyPetsSection`) and basic add/edit form structure (`PetProfileForm`).
 *   **[DONE]** Frontend: User state management for profile updates (`userStore.ts`).
-*   **[DONE]** Frontend: Pet state management for CRUD operations (`petStore.ts`).
+*   **[DONE]** Frontend: Pet state management for CRUD operations (`petStore.ts` using `/api/v1/pets`).
 *   **[DONE]** Frontend: Basic API service setup (`api.ts`).
 *   **[DONE]** Frontend: Image URL handling for locally served files.
-*   **[IN PROGRESS]** Backend: User Profile update API (`PATCH /api/v1/me` or `/me/profile`) - Support all fields & avatar upload.
-*   **[IN PROGRESS]** Backend: Pet Profile CRUD APIs (`/api/v1/pets/*` or `/me/pets/*`) - Support all fields & photo management.
-*   **[ ] Backend:** Configure static file serving for `/uploads/*`.
-*   **[ ] Database:** Write and test database seeding script.
-*   **[ ] Testing:** End-to-end testing for User/Pet Profile CRUD operations (including images).
+*   **[DONE]** Backend: User Profile update API (`PATCH /api/v1/me`) - Supports fields & avatar upload (Handler/Service/Repo implemented, route registered).
+*   **[DONE]** Backend: Pet Profile CRUD APIs (`POST, GET, PUT, DELETE /api/v1/pets/:petId`) - Supports fields & photo management (Handler/Service/Repo implemented, routes registered).
+*   **[DONE]** Backend: Static file serving configured for `/uploads/*`.
+*   **[ ]** Backend: Implement `GET /api/v1/pets/:petId` endpoint (missing).
+*   **[ ]** Database: Write and test database seeding script.
+*   **[ ]** Testing: End-to-end testing for User/Pet Profile CRUD operations (including images, edge cases, validation).
+*   **[Optional Refactor]** Backend: Move `GET /api/v1/me` logic from `main.go` to `user_handler.go`.
+*   **[Optional Refactor]** Backend/Frontend: Align Pet API paths to `/me/pets/*` instead of `/api/v1/pets/*`.
 
 **Phase 2: Matching & Connections**
 
