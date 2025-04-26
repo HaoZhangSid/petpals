@@ -1,7 +1,7 @@
 import { JSX, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useUserStore } from './store/userStore';
-import './App.css';
+// import './App.css';
 
 // Page components
 import Login from './pages/Login';

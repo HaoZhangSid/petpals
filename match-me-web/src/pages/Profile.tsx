@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUserStore } from '../store/userStore';
 import { usePetStore } from '../store/petStore';
-import { User, Pet } from '../types';
+import { User, Pet, Photo } from '../types';
 import { useModal } from '../contexts/ModalContext';
 import UserProfileForm from '../components/profile/UserProfileForm';
 import UserPhotosForm from '../components/profile/UserPhotosForm';
@@ -11,12 +11,25 @@ import Lightbox from '../components/common/Lightbox';
 import MyPetsSection from '../components/profile/MyPetsSection';
 import UserProfileInfo from '../components/profile/UserProfileInfo';
 import UserPhotosSection from '../components/profile/UserPhotosSection';
+import { UserProfileUpdatePayload } from '../components/profile/UserProfileForm';
+import { toast } from 'react-hot-toast';
+
+// Define API Base URL (used by helper)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+// Add the helper function here
+const getFullPhotoUrl = (url: string | null | undefined): string => {
+  if (!url) return '/placeholder-image.png'; // Handle null/undefined URLs
+  return url.startsWith('/uploads/') ? `${API_BASE_URL}${url}` : url;
+};
 
 const Profile = () => {
   const user = useUserStore(state => state.user);
   const isInitializing = useUserStore(state => state.isInitializing);
   const updateUserProfile = useUserStore(state => state.updateUserProfile);
   const { pets } = usePetStore();
+  const uploadUserPhotos = useUserStore(state => state.uploadUserPhotos);
+  const isUploading = useUserStore(state => state.isUploading);
 
   const { openAddPetModal } = useModal();
 
@@ -24,11 +37,12 @@ const Profile = () => {
   const [isEditingPhotos, setIsEditingPhotos] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [currentLightboxIndex, setCurrentLightboxIndex] = useState(0);
+
+  const [lightboxPhotos, setLightboxPhotos] = useState<Array<{id: string; url: string; isPrimary?: boolean }>>([]);
 
   const handleStartEditUser = () => setEditingUser(true);
   const handleStartEditPhotos = () => setIsEditingPhotos(true);
@@ -37,46 +51,50 @@ const Profile = () => {
     setIsEditingPhotos(false);
   };
 
-  const handleSaveUserProfile = async (formData: FormData) => {
+  const handleSaveUserProfile = async (userData: UserProfileUpdatePayload) => {
     setIsSaving(true);
-    setSaveSuccess(null);
     try {
-      await updateUserProfile(formData);
-      setSaveSuccess("Profile updated successfully!");
+      await updateUserProfile(userData);
+      toast.success("Profile updated successfully!");
       setEditingUser(false);
-      setTimeout(() => setSaveSuccess(null), 3000);
       } catch (error) {
       console.error("Failed to save user profile:", error);
-      setSaveSuccess("Failed to update profile. Please try again.");
-      setTimeout(() => setSaveSuccess(null), 4000);
+      const errorMsg = error instanceof Error ? error.message : "Please try again.";
+      toast.error(`Failed to update profile: ${errorMsg}`);
       } finally {
       setIsSaving(false);
     }
   };
 
   const handleSaveUserPhotos = async (formData: FormData) => {
-    setIsSaving(true);
-    setSaveSuccess(null);
     try {
-      await updateUserProfile(formData);
-      setSaveSuccess("Photos updated successfully!");
+      await uploadUserPhotos(formData);
+      toast.success("Photos uploaded successfully!");
       setIsEditingPhotos(false);
-      setTimeout(() => setSaveSuccess(null), 3000);
     } catch (error) {
-      console.error("Failed to save user photos:", error);
-      setSaveSuccess("Failed to update photos. Please try again.");
-      setTimeout(() => setSaveSuccess(null), 4000);
-    } finally {
-      setIsSaving(false);
+      console.error("Failed to upload user photos:", error);
+      const storeError = useUserStore.getState().error;
+      const errorMsg = storeError || (error instanceof Error ? error.message : "Please try again.");
+      toast.error(`Failed to upload photos: ${errorMsg}`);
     }
   };
 
-  const openLightbox = (images: string[], index: number) => {
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-    const fullImageUrls = images.map(img =>
-      img.startsWith('/uploads/') ? `${apiBaseUrl}${img}` : img
-    );
-    setLightboxImages(fullImageUrls);
+  const openLightbox = (index: number) => {
+    console.log(`[Profile] openLightbox called with index: ${index}`);
+    const photosToPass = user?.photos?.map(p => ({ 
+        id: p.id, 
+        url: getFullPhotoUrl(p.url), 
+        isPrimary: p.isPrimary 
+    })) || [];
+    console.log("[Profile] photosToPass:", photosToPass);
+
+    if (photosToPass.length === 0) {
+      console.log("[Profile] No photos to pass, aborting lightbox open.");
+      return; 
+    }
+
+    console.log(`[Profile] Setting lightbox states: isLightboxOpen=true, currentLightboxIndex=${index}`);
+    setLightboxPhotos(photosToPass);
     setCurrentLightboxIndex(index);
     setIsLightboxOpen(true);
   };
@@ -104,6 +122,8 @@ const Profile = () => {
       );
   }
 
+  console.log(`[Profile] Rendering, isLightboxOpen: ${isLightboxOpen}`);
+
   return (
     <div className="container mx-auto p-4 md:p-8 bg-cream min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -118,23 +138,9 @@ const Profile = () => {
         </button>
       </div>
 
-        <AnimatePresence>
-          {saveSuccess && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className={`border ${saveSuccess.includes('Failed') ? 'bg-red-100 border-red-200 text-red-700' : 'bg-green-100 border-green-200 text-green-700'} px-4 py-3 rounded-lg mb-6 flex items-center justify-center`}
-            >
-              <span className="mr-2">{saveSuccess.includes('Failed') ? '❌' : '✅'}</span>
-              {saveSuccess}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <UserProfileInfo user={user} pets={pets} onStartEdit={handleStartEditUser} />
 
-        <UserPhotosSection user={user} onStartEdit={handleStartEditPhotos} openLightbox={openLightbox} />
+        <UserPhotosSection />
 
         <MyPetsSection
           openAddPetModal={openAddPetModal}
@@ -149,7 +155,6 @@ const Profile = () => {
       <AnimatePresence>
         {isEditingPhotos && (
           <UserPhotosForm 
-            user={user} 
             onSubmit={handleSaveUserPhotos} 
             onCancel={() => setIsEditingPhotos(false)}
           />
@@ -158,7 +163,7 @@ const Profile = () => {
 
       {isLightboxOpen && (
         <Lightbox 
-          images={lightboxImages} 
+          photos={lightboxPhotos}
           startIndex={currentLightboxIndex} 
           onClose={() => setIsLightboxOpen(false)} 
         />

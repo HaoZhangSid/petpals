@@ -8,7 +8,7 @@ interface UserProfileInfoProps {
 }
 
 // API Base URL - Define this constant
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Use VITE env var
 
 // Helper function moved from Profile.tsx
 const getInterestTagColor = (index: number): string => {
@@ -25,11 +25,11 @@ const getInterestTagColor = (index: number): string => {
 };
 
 const UserProfileInfo: React.FC<UserProfileInfoProps> = ({ user, pets, onStartEdit }) => {
-  // Construct the full avatar URL
-  const avatarUrl = user.avatar
-    ? user.avatar.startsWith('/uploads/')
-      ? `${API_BASE_URL}${user.avatar}`
-      : user.avatar // Assume it's already a full URL if it doesn't start with /uploads/
+  // Construct the full avatar URL using user.avatarUrl
+  const displayAvatarUrl = user.avatarUrl // Use the correct field name
+    ? user.avatarUrl.startsWith('/uploads/')
+      ? `${API_BASE_URL}${user.avatarUrl}`
+      : user.avatarUrl // Assume it's already a full URL if it doesn't start with /uploads/
     : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=128&h=128&q=80'; // Default placeholder
 
   return (
@@ -45,9 +45,15 @@ const UserProfileInfo: React.FC<UserProfileInfoProps> = ({ user, pets, onStartEd
           <div className="flex flex-col sm:flex-row items-end sm:items-start">
             <div className="-mt-16 mb-4 sm:mb-0">
               <img
-                src={avatarUrl} // Use the constructed URL
+                src={displayAvatarUrl} // Use the constructed URL with the correct field
                 alt="User Avatar"
                 className="w-32 h-32 rounded-full border-4 border-white shadow-md bg-gray-200 object-cover"
+                // Optional: Add onError handler for broken images
+                onError={(e) => { 
+                  const target = e.target as HTMLImageElement;
+                  target.src = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=128&h=128&q=80'; // Fallback placeholder
+                  target.onerror = null; 
+                }}
               />
             </div>
             <div className="sm:ml-6 sm:mt-4 flex-grow">

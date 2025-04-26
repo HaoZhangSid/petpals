@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { usePetStore } from '../../store/petStore';
 import { useUserStore } from '../../store/userStore';
-import { Pet, Activity } from '../../types';
+import { Pet } from '../../types';
 import PetProfileForm from './PetProfileForm';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 interface MyPetsSectionProps {
   openAddPetModal: () => void;
-  openLightbox: (images: string[], index: number) => void;
+  openLightbox: (index: number) => void;
 }
 
 // Define API base URL directly for now to avoid import.meta.env issues
@@ -40,39 +40,6 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
       fetchPets();
     }
   }, [isInitializing, user, fetchPets]);
-
-  // --- Helper Functions (Moved from Profile.tsx) ---
-  const getActivityCardColor = (type: Activity['type']): { bgOpacity: string; border: string } => {
-    const colors: Record<Activity['type'], { bgOpacity: string; border: string }> = {
-      match: { bgOpacity: 'bg-green-50', border: 'border-green-200' },
-      playdate: { bgOpacity: 'bg-blue-50', border: 'border-blue-200' },
-      message: { bgOpacity: 'bg-purple-50', border: 'border-purple-200' },
-      like: { bgOpacity: 'bg-pink-50', border: 'border-pink-200' },
-      comment: { bgOpacity: 'bg-yellow-50', border: 'border-yellow-200' },
-      connection_request: { bgOpacity: 'bg-orange-50', border: 'border-orange-200' },
-      connection_accepted: { bgOpacity: 'bg-green-50', border: 'border-green-200' },
-      photo_added: { bgOpacity: 'bg-purple-50', border: 'border-purple-200' },
-      profile_view: { bgOpacity: 'bg-gray-50', border: 'border-gray-200' },
-      playdate_invitation: { bgOpacity: 'bg-blue-50', border: 'border-blue-200' }
-    };
-    return colors[type];
-  };
-
-  const getActivityDetails = (activity: Activity): { icon: string; text: string } => {
-    const details: Record<Activity['type'], { icon: string; text: string }> = {
-      match: { icon: '❤️', text: 'New Match' },
-      playdate: { icon: '🎮', text: 'Playdate Scheduled' },
-      message: { icon: '💬', text: 'New Message' },
-      like: { icon: '👍', text: 'New Like' },
-      comment: { icon: '💭', text: 'New Comment' },
-      connection_request: { icon: '🤝', text: 'Connection Request' },
-      connection_accepted: { icon: '✅', text: 'Connection Accepted' },
-      photo_added: { icon: '📸', text: 'New Photo Added' },
-      profile_view: { icon: '👀', text: 'Profile Viewed' },
-      playdate_invitation: { icon: '📅', text: 'Playdate Invitation' }
-    };
-    return details[activity.type];
-  };
 
   // --- Event Handlers ---
   const handleStartEditPet = (petToEdit: Pet) => {
@@ -149,9 +116,9 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
       {!isLoadingPets && (
         <div className="flex space-x-4 mb-6 overflow-x-auto pb-2 hide-scrollbar">
           {Array.isArray(pets) && pets.map(pet => {
-            const tabImageUrl = pet.avatar?.startsWith('/uploads/')
-                                ? `${API_BASE_URL}${pet.avatar}` // Use defined constant
-                                : pet.avatar || '/placeholder-pet.png';
+            const tabImageUrl = pet.avatarUrl?.startsWith('/uploads/')
+                                ? `${API_BASE_URL}${pet.avatarUrl}`
+                                : pet.avatarUrl || '/placeholder-pet.png';
 
             return (
               <button
@@ -159,7 +126,6 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                 onClick={() => setActivePet(pet.id)}
                 className={`pet-tab rounded-xl bg-white p-3 border-2 shadow-sm flex items-center space-x-3 cursor-pointer flex-shrink-0 transition duration-150 ease-in-out ${activePet?.id === pet.id ? 'border-softpink' : 'border-gray-100 hover:border-gray-300'}`}
               >
-                {/* ... (img and text for tab) ... */}
                 <img
                   src={tabImageUrl}
                   alt={pet.name}
@@ -177,7 +143,6 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
               </button>
             );
           })}
-          {/* ... (Add New Pet button) ... */}
           <button
             className="pet-tab rounded-xl bg-white p-3 border-2 border-dashed border-gray-300 shadow-sm flex items-center justify-center space-x-2 cursor-pointer hover:bg-gray-50 hover:border-gray-400 flex-shrink-0 w-40 transition duration-150 ease-in-out"
             onClick={handleAddNewPet}
@@ -194,7 +159,6 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
               <div className="p-6">
-                {/* ... (Header with edit/delete buttons) ... */}
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-purple-700">{activePet.name}'s Profile</h2>
                   <div className="flex space-x-2">
@@ -212,12 +176,11 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                     </button>
                   </div>
                 </div>
-                {/* ... (Avatar, name, basic info) ... */}
                 <div className="text-center mb-6">
                   {(() => {
-                    const profileImageUrl = activePet.avatar?.startsWith('/uploads/')
-                                          ? `${API_BASE_URL}${activePet.avatar}` // Use defined constant
-                                          : activePet.avatar || '/placeholder-pet.png';
+                    const profileImageUrl = activePet.avatarUrl?.startsWith('/uploads/')
+                                          ? `${API_BASE_URL}${activePet.avatarUrl}`
+                                          : activePet.avatarUrl || '/placeholder-pet.png';
                     return (
                       <img
                         src={profileImageUrl}
@@ -233,14 +196,12 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                   })()}
                   <h3 className="font-bold text-lg text-purple-700">{activePet.name}</h3>
                   <p className="text-gray-600 text-sm">
-                    {activePet.type || 'Pet'} • {activePet.breed || 'Breed not set'} • {activePet.age || '?'} years old
+                    {activePet.type || 'Pet'} • {activePet.breed || 'Breed not set'}
                   </p>
                 </div>
-                {/* ... (Detailed info section) ... */}
                 <div className="border-t border-gray-100 p-6 space-y-3">
                   <p><strong>Type:</strong> {activePet.type}</p>
                   <p><strong>Breed:</strong> {activePet.breed || <span className="text-gray-400">Not Set</span>}</p>
-                  <p><strong>Age:</strong> {activePet.age ? `${activePet.age} years` : <span className="text-gray-400">Not Set</span>}</p>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Gender:</span>
                     <span className="font-medium text-gray-800 capitalize">{activePet.gender || '-'}</span>
@@ -267,7 +228,6 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                   </div>
                 </div>
               </div>
-              {/* ... (Personality section) ... */}
               <div className="border-t border-gray-100 px-6 py-4">
                 <h3 className="font-bold text-gray-700 mb-2 text-sm">Personality</h3>
                 <div className="flex flex-wrap gap-1">
@@ -281,10 +241,8 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                 </div>
               </div>
             </div>
-            {/* Favorite Activities Card */}
             <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
               <div className="p-6">
-                {/* ... (Header with edit button) ... */}
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-purple-700">Favorite Activities</h2>
                   <button
@@ -294,19 +252,11 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                     ✏️
                   </button>
                 </div>
-                {/* ... (Activities list or empty state) ... */}
                 {activePet.favoriteActivities && activePet.favoriteActivities.length > 0 ? (
                   <div className="space-y-3">
                     {activePet.favoriteActivities.slice(0, 3).map((activity, index) => {
-                      const colorInfo = getActivityCardColor('playdate');
-                      const activityDetails = getActivityDetails({ id: `activity-${index}`, type: 'playdate', actor: user!, createdAt: new Date().toISOString(), read: false });
                       return (
-                        <div key={index} className={`${colorInfo.bgOpacity} rounded-xl p-3 border ${colorInfo.border} flex items-center`}>
-                          <span className="text-2xl mr-3">{activityDetails.icon}</span>
-                          <div>
-                            <h3 className="font-bold text-gray-800 text-sm">{activity}</h3>
-                          </div>
-                        </div>
+                        <div key={index} className="bg-lavender bg-opacity-30 text-purple-700 text-xs px-2 py-1 rounded-full">{activity}</div>
                       );
                     })}
                     {activePet.favoriteActivities.length > 3 && (
@@ -333,9 +283,7 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
 
           {/* Right Column: About and Photos */}
           <div className="lg:col-span-2 space-y-6">
-            {/* About Card */}
             <div className="bg-white rounded-2xl shadow-soft p-6">
-              {/* ... (Header with edit button) ... */}
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-purple-700">About {activePet.name}</h2>
                 <button
@@ -345,7 +293,6 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                   ✏️
                 </button>
               </div>
-              {/* ... (Bio or empty state) ... */}
               {activePet.bio ? (
                 <p className="text-gray-700 text-sm">
                   {activePet.bio}
@@ -362,64 +309,41 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
                 </div>
               )}
             </div>
-            {/* Photos Card */}
-            <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
-              <div className="p-6">
-                {/* ... (Header with edit button) ... */}
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold text-purple-700">{activePet.name}'s Photos</h2>
-                  <button
-                    onClick={() => handleStartEditPet(activePet)}
-                    className="text-skyblue hover:text-blue-600 text-lg"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                {/* ... (Photo grid or empty state) ... */}
-                {Array.isArray(activePet.photos) && activePet.photos.length > 0 ? (
-                  <div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {activePet.photos.slice(0, 5).map((photoUrl, index) => {
-                        const fullPhotoUrl = photoUrl.startsWith('/uploads/')
-                                            ? `${API_BASE_URL}${photoUrl}` // Use defined constant
-                                            : photoUrl;
+            <div className="bg-white rounded-2xl shadow-soft p-6">
+              <h2 className="text-xl font-bold text-purple-700 mb-4">{activePet.name}'s Photos</h2>
+              {/* Use optional chaining and photoUrls for now */}
+              {(activePet.photoUrls?.length || 0) > 0 ? (
+                <div className="grid grid-cols-3 gap-3">
+                   {/* Map over photoUrls with type annotations */}
+                  {activePet.photoUrls?.map((url: string, index: number) => {
+                    const fullUrl = url.startsWith('/uploads/') ? `${API_BASE_URL}${url}` : url;
                         return (
                           <div
-                              key={index}
-                              className={`gallery-item overflow-hidden rounded-xl shadow-sm cursor-pointer ${index === 0 ? 'col-span-2 row-span-2' : ''}`}
-                              onClick={() => openLightbox(activePet.photos || [], index)}
+                        key={index} // Use index as key for now
+                        className="gallery-item overflow-hidden rounded-xl shadow-sm cursor-pointer aspect-square"
+                        // Temporarily disable lightbox for pet photos until data structure is confirmed
+                        // onClick={() => openLightbox(/* Needs adjustment */ index)} 
                            >
                             <img
-                              src={fullPhotoUrl}
+                          src={fullUrl}
                               alt={`${activePet.name} photo ${index + 1}`}
-                              className="w-full h-full object-cover hover:opacity-90 transition duration-300 bg-gray-200 aspect-square"
+                          className="w-full h-full object-cover hover:opacity-90 transition duration-300 bg-gray-200"
+                          onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder-pet.png'; }}
                             />
                           </div>
                         );
                       })}
                     </div>
-                    {activePet.photos.length > 5 && (
-                      <button
-                        className="w-full text-center py-2 mt-3 text-sm text-skyblue hover:text-blue-600 transition"
-                        onClick={() => openLightbox(activePet.photos || [], 0)}
-                      >
-                        View all {activePet.photos.length} photos
-                      </button>
+              ) : (
+                <p className="text-sm text-gray-500">No photos uploaded for {activePet.name} yet.</p>
                     )}
-                  </div>
-                ) : (
-                  <div className="py-10 flex flex-col items-center justify-center">
-                    <div className="text-gray-300 text-5xl mb-4">📷</div>
-                    <p className="text-gray-500 text-sm text-center mb-4">No photos added yet</p>
+              {/* TODO: Add Upload button for pet photos, link to POST /me/pets/{petId}/photos */}
                     <button
-                      onClick={() => handleStartEditPet(activePet)}
-                      className="px-4 py-1.5 bg-skyblue text-white rounded-full text-sm hover:bg-blue-500 transition"
+                 onClick={() => alert('Pet photo upload not implemented yet.')}
+                 className="mt-4 w-full text-center py-2 text-sm text-skyblue hover:text-blue-600 transition"
                     >
-                      Upload Photos
+                Upload Pet Photos (TODO)
                     </button>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -435,11 +359,9 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
       )}
 
       {/* Modals related to pet editing/deleting */}
-      {/* ... (AnimatePresence for editingPet modal) ... */}
       <AnimatePresence>
         {editingPet && ( <PetProfileForm pet={editingPet} mode="edit" onSubmit={handleSavePetProfile} onCancel={handleCancelEditPet} /> )}
       </AnimatePresence>
-      {/* ... (AnimatePresence for showDeleteConfirm modal) ... */}
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div
@@ -475,6 +397,15 @@ const MyPetsSection: React.FC<MyPetsSectionProps> = ({ openAddPetModal, openLigh
           </motion.div>
         )}
       </AnimatePresence>
+      <style>
+        {`.hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }`}
+      </style>
     </>
   );
 };

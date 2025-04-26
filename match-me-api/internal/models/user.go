@@ -16,10 +16,10 @@ type User struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`                                        // Timestamp of creation
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`                                        // Timestamp of last update
 	// Avatar    string         `gorm:"size:512" json:"avatar,omitempty"`                                  // Removed - Handled by Photo model
-	Location  string         `gorm:"size:255" json:"location,omitempty"`             // Added json tag
-	Phone     string         `gorm:"size:50" json:"phone,omitempty"`                 // Added json tag
-	Bio       string         `gorm:"type:text" json:"bio,omitempty"`                 // Added json tag
-	Interests pq.StringArray `gorm:"type:varchar(100)[]" json:"interests,omitempty"` // Added json tag
+	Location  string         `gorm:"size:255" json:"location"`             // Removed omitempty
+	Phone     string         `gorm:"size:50" json:"phone"`                 // Removed omitempty
+	Bio       string         `gorm:"type:text" json:"bio"`                 // Removed omitempty
+	Interests pq.StringArray `gorm:"type:varchar(100)[]" json:"interests"` // Removed omitempty
 	// Photos    pq.StringArray `gorm:"type:text[]" json:"photos,omitempty"`                               // Removed - Handled by Photo model
 
 	// Relationships
@@ -28,8 +28,9 @@ type User struct {
 	Pets []Pet `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;" json:"-"` // Added json tag
 
 	// Transient field for API responses (populated by service layer)
-	AvatarURL *string  `gorm:"-" json:"avatarUrl,omitempty"` // Primary photo URL
-	PhotoURLs []string `gorm:"-" json:"photoUrls,omitempty"` // Other photo URLs
+	AvatarURL *string  `gorm:"-" json:"avatarUrl"` // Primary photo URL
+	PhotoURLs []string `gorm:"-" json:"photoUrls"` // Other photo URLs (keep for potential compatibility?)
+	Photos    []Photo  `gorm:"-" json:"photos"`    // ADDED: Full photo objects for detailed info
 }
 
 // UserUpdatePayload defines the structure for updating a user profile.

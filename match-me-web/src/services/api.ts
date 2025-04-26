@@ -1,6 +1,7 @@
 // src/services/api.ts
 import axios from 'axios';
 import { useUserStore } from '../store/userStore'; // Import the store
+import { Photo } from '../types';
 
 // 创建 axios 实例
 export const api = axios.create({
@@ -43,3 +44,34 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/**
+ * Uploads one or more photos for the current user.
+ * @param formData FormData containing the photos under the key 'photos', and optionally 'caption' and 'isPrimary'.
+ * @returns Promise<Photo[]> Array of created photo objects.
+ */
+export const uploadUserPhotos = async (formData: FormData): Promise<Photo[]> => {
+  const response = await api.post<Photo[]>('/api/v1/me/photos', formData, {
+    // Axios will automatically set Content-Type to multipart/form-data for FormData
+  });
+  return response.data;
+};
+
+/**
+ * Sets a specific photo as the primary avatar for the current user.
+ * @param photoId The ID of the photo to set as primary.
+ * @returns Promise<Photo> The updated photo object.
+ */
+export const setPrimaryPhoto = async (photoId: string): Promise<Photo> => {
+  const response = await api.patch<Photo>(`/api/v1/photos/${photoId}/primary`);
+  return response.data;
+};
+
+/**
+ * Deletes a specific photo belonging to the current user.
+ * @param photoId The ID of the photo to delete.
+ * @returns Promise<void>
+ */
+export const deletePhoto = async (photoId: string): Promise<void> => {
+  await api.delete(`/api/v1/photos/${photoId}`);
+};

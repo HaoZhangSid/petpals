@@ -2,19 +2,18 @@ package main
 
 import (
 	"log"
-	"os"
 	"time"
 
-	"golang.org/x/crypto/bcrypt" // For hashing passwords
 	"github.com/HaoZhangSid/match-me-api/config"
 	"github.com/HaoZhangSid/match-me-api/internal/database"
 	"github.com/HaoZhangSid/match-me-api/internal/models"
-	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-	"github.com/lib/pq" // For StringArray
+	"github.com/lib/pq"          // For StringArray
+	"golang.org/x/crypto/bcrypt" // For hashing passwords
 	"gorm.io/gorm"
-	// "math/rand" // May need later for randomization
-	"fmt" // For generating unique emails/names
+
+	"fmt"       // For generating unique emails/names
+	"math/rand" // Using this for pet count now
 )
 
 func main() {
@@ -26,8 +25,8 @@ func main() {
 		log.Println("No .env file found, using environment variables or defaults")
 	}
 
-	// Load configuration
-	cfg := config.LoadConfig()
+	// Load configuration (keep it even if unused for now, might be needed later)
+	_ = config.LoadConfig()
 
 	// Connect to the database
 	err = database.Connect()
@@ -50,7 +49,7 @@ func seedData(db *gorm.DB) error {
 	log.Println("Seeding data...")
 
 	// --- Configuration ---
-	numUsers := 20 // Number of users to create
+	numUsers := 20         // Number of users to create
 	numPetsPerUserMax := 3 // Maximum pets per user
 
 	// --- Clean existing data (optional, use with caution!) ---
@@ -64,10 +63,8 @@ func seedData(db *gorm.DB) error {
 	// if err := db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.User{}).Error; err != nil { return fmt.Errorf("failed to delete users: %w", err) }
 	// log.Println("Existing data cleaned.")
 
-
 	// --- Seed Users ---
-	log.Printf("Creating %d users...
-", numUsers)
+	log.Printf("Creating %d users...\n", numUsers)
 	users := make([]models.User, 0, numUsers)
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost) // Use a common password for seeds
 
@@ -89,12 +86,10 @@ func seedData(db *gorm.DB) error {
 		}
 		users = append(users, user)
 	}
-	log.Printf("Created %d users.
-", len(users))
+	log.Printf("Created %d users.\n", len(users))
 
 	// --- Seed Pets ---
-	log.Printf("Creating pets for users (up to %d per user)...
-", numPetsPerUserMax)
+	log.Printf("Creating pets for users (up to %d per user)...\n", numPetsPerUserMax)
 	petCount := 0
 	petTypes := []string{"Dog", "Cat", "Rabbit", "Hamster", "Parrot"}
 	dogBreeds := []string{"Labrador", "Poodle", "German Shepherd", "Golden Retriever", "Beagle"}
@@ -106,11 +101,10 @@ func seedData(db *gorm.DB) error {
 	genders := []string{"Male", "Female"}
 
 	// Initialize random seed if needed (uncomment math/rand import too)
-	// rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UnixNano())
 
 	for _, user := range users {
-		// numPets := rand.Intn(numPetsPerUserMax + 1) // 0 to Max pets
-        numPets := (int(user.ID.ID() % uint64(numPetsPerUserMax))) + 1 // Deterministic pet count based on user ID
+		numPets := rand.Intn(numPetsPerUserMax + 1) // 0 to Max pets (using math/rand)
 		for j := 0; j < numPets; j++ {
 			petType := petTypes[petCount%len(petTypes)]
 			var breed *string
@@ -121,31 +115,30 @@ func seedData(db *gorm.DB) error {
 				b := catBreeds[petCount%len(catBreeds)]
 				breed = &b
 			}
-            gender := genders[petCount%len(genders)]
-            weight := float64(petCount%20 + 5) // Example weight
-            bDay := time.Now().AddDate(-(petCount % 10), - (petCount % 12), 0) // Example birthday
-            activityLevel := activityLevels[petCount%len(activityLevels)]
-            isNeutered := petCount%2 == 0
-            isVaccinated := petCount%3 != 0
-            isMicrochipped := petCount%4 == 0
-
+			gender := genders[petCount%len(genders)]
+			weight := float64(petCount%20 + 5)                                // Example weight
+			bDay := time.Now().AddDate(-(petCount % 10), -(petCount % 12), 0) // Example birthday
+			activityLevel := activityLevels[petCount%len(activityLevels)]
+			isNeutered := petCount%2 == 0
+			isVaccinated := petCount%3 != 0
+			isMicrochipped := petCount%4 == 0
 
 			pet := models.Pet{
-				UserID:           user.ID,
-				Name:             fmt.Sprintf("%s Pet %d", user.Name, j+1),
-				Type:             petType,
-				Breed:            breed,
-                Gender:           &gender,
-                Weight:           &weight,
-                Birthday:         &bDay,
-				Bio:              stringToPtr(fmt.Sprintf("Bio for %s's pet %d.", user.Name, j+1)),
-				Personality:      pq.StringArray([]string{personalities[petCount%len(personalities)], personalities[(petCount+1)%len(personalities)]}),
+				UserID:             user.ID,
+				Name:               fmt.Sprintf("%s Pet %d", user.Name, j+1),
+				Type:               petType,
+				Breed:              breed,
+				Gender:             &gender,
+				Weight:             &weight,
+				Birthday:           &bDay,
+				Bio:                stringToPtr(fmt.Sprintf("Bio for %s's pet %d.", user.Name, j+1)),
+				Personality:        pq.StringArray([]string{personalities[petCount%len(personalities)], personalities[(petCount+1)%len(personalities)]}),
 				FavoriteActivities: pq.StringArray([]string{activities[petCount%len(activities)], activities[(petCount+2)%len(activities)]}),
-				PlayStyle:        pq.StringArray([]string{playStyles[petCount%len(playStyles)]}),
-                ActivityLevel:    &activityLevel,
-                IsNeutered:       &isNeutered,
-                IsVaccinated:     &isVaccinated,
-                IsMicrochipped:   &isMicrochipped,
+				PlayStyle:          pq.StringArray([]string{playStyles[petCount%len(playStyles)]}),
+				ActivityLevel:      &activityLevel,
+				IsNeutered:         &isNeutered,
+				IsVaccinated:       &isVaccinated,
+				IsMicrochipped:     &isMicrochipped,
 			}
 			result := db.Create(&pet)
 			if result.Error != nil {
@@ -155,21 +148,16 @@ func seedData(db *gorm.DB) error {
 			petCount++
 		}
 	}
-	log.Printf("Created %d pets.
-", petCount)
-
+	log.Printf("Created %d pets.\n", petCount)
 
 	// --- Seed Photos (Optional - Placeholder URLs) ---
 	// TODO: Implement if needed, potentially creating placeholder Photo records
 
-
 	// --- Seed Connections (Optional) ---
-    // TODO: Implement if needed, create some pending/accepted connections
-
+	// TODO: Implement if needed, create some pending/accepted connections
 
 	// --- Seed Conversations & Messages (Optional) ---
 	// TODO: Implement if needed
-
 
 	log.Println("Data seeding finished.")
 	return nil
@@ -181,4 +169,4 @@ func stringToPtr(s string) *string {
 		return nil
 	}
 	return &s
-} 
+}

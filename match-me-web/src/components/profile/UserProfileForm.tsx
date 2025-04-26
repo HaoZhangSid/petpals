@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User } from '../../types';
+import { User, LoginCredentials /* other types */ } from '../../types';
 import { motion } from 'framer-motion';
+
+// Define the type for the update payload based on userStore
+export type UserProfileUpdatePayload = Partial<Pick<User, 'name' | 'location' | 'phone' | 'bio' | 'interests'>>;
 
 interface UserProfileFormProps {
   user: User;
-  onSubmit: (formData: FormData) => Promise<void>;
+  onSubmit: (userData: UserProfileUpdatePayload) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -22,27 +25,11 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
   const [bio, setBio] = useState(user.bio || '');
   const [interests, setInterests] = useState<string[]>(user.interests || []);
   const [newInterest, setNewInterest] = useState('');
-
-  // Avatar state
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatar || null);
-  
-  // API Base URL for avatar preview construction
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-  // Photo state (keeping for structure, might need merging later if photos are added here)
-  const [existingPhotos, setExistingPhotos] = useState<string[]>(user.photos || []);
-  const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
-  const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([]); // For new photo previews
   
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  
-  // Refs
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null); // Keep ref if photos are managed here
   
   // Track window resize
   useEffect(() => {
@@ -55,7 +42,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
   
   // Updated steps definition to match PetProfileForm structure
   const steps = [
-    { title: "Basic Information", fields: ["name", "email", "phone", "location", "avatar"] },
+    { title: "Basic Information", fields: ["name", "email", "phone", "location"] },
     { title: "About Me", fields: ["bio", "interests"] },
     // Add Photos step if user photos are managed here
     // { title: "Photos", fields: ["photos"] } 
@@ -96,66 +83,29 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
     setInterests(prev => prev.filter(item => item !== interestToRemove));
   };
 
-  // File input triggers
-  const handleAvatarClick = () => avatarInputRef.current?.click();
-  // const handlePhotoClick = () => photoInputRef.current?.click(); // Uncomment if photos handled here
-
-  // Avatar upload (generates preview)
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Avatar image cannot exceed 5MB');
-        return;
-      }
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file for the avatar');
-        return;
-      }
-      setAvatarFile(file); // Store the file object
-      const reader = new FileReader();
-      reader.onloadend = () => setAvatarPreview(reader.result as string); // Set preview URL (Data URL)
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Photo upload (If needed for this form)
-  // const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => { ... };
-  // const handleRemoveExistingPhoto = (indexToRemove: number) => { ... };
-  // const handleRemoveNewPhoto = (indexToRemove: number) => { ... };
-
   // --- Form Submission ---
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (isSubmitting) return; // Prevent double submit
     
-    const data = new FormData();
+    // Create the JSON payload object
+    const payload: UserProfileUpdatePayload = {
+      name: name,
+      location: location || null, // Send null if empty, matching Go pointers
+      phone: phone || null,     // Send null if empty
+      bio: bio || null,         // Send null if empty
+      interests: interests.length > 0 ? interests : null, // Send null if empty array
+    };
 
-    // Append text fields
-    data.append('name', name);
-    data.append('location', location);
-    data.append('phone', phone);
-    data.append('bio', bio);
-    data.append('interests', interests.join(',')); 
+    // Optional: Only include fields that actually changed? 
+    // This requires comparing with initial user prop, adds complexity.
+    // For now, sending all fields is simpler and PATCH should handle it.
 
-    // Append new avatar if selected
-    if (avatarFile) {
-      data.append('avatarImage', avatarFile);
-    }
-
-    // Append new photo files if handled here
-    // newPhotoFiles.forEach(file => { data.append('userPhotos', file); });
-
-    // Append existing photo URLs to keep if handled here
-    // if (existingPhotos.length > 0) { existingPhotos.forEach(url => { data.append('photos', url); }); } 
-    // else { data.append('photos', ''); }
-
-    console.log("Submitting User FormData:");
-    for (let [key, value] of data.entries()) { console.log(key, value); }
+    console.log("Submitting User JSON Payload:", payload);
 
     setIsSubmitting(true);
     try {
-      await onSubmit(data); 
+      await onSubmit(payload); 
     } catch (error) {
       console.error("Error submitting user profile form:", error);
       alert("Failed to save profile. Please try again."); 
@@ -167,57 +117,8 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({
   // --- Rendering Sections (Updated Styles) --- //
 
   const renderBasicInfoSection = () => {
-    // Construct avatar preview URL (Handles Data URLs and relative paths from DB)
-    let displayImageUrl = '/placeholder-avatar.png'; // Default placeholder
-    if (avatarPreview) {
-        if (avatarPreview.startsWith('/uploads/')) {
-            displayImageUrl = `${API_BASE_URL}${avatarPreview}`;
-        } else {
-            displayImageUrl = avatarPreview; // Assume Data URL or full URL
-        }
-    } else if (user.avatar) { // Use original avatar from user prop if no preview yet
-         if (user.avatar.startsWith('/uploads/')) {
-            displayImageUrl = `${API_BASE_URL}${user.avatar}`;
-        } else {
-            displayImageUrl = user.avatar; // Assume full URL
-        }
-    }
-
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-        {/* Avatar Upload - styled similar to PetProfileForm */}
-        <div className="flex justify-center mb-6">
-          <div className="relative group">
-            <img 
-              src={displayImageUrl}
-              alt="Avatar Preview"
-              className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md mx-auto cursor-pointer bg-gray-100"
-              onClick={handleAvatarClick}
-              onError={(e) => { 
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder-avatar.png'; // Fallback placeholder
-                  target.onerror = null; 
-              }}
-            />
-            <div 
-              className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer"
-              onClick={handleAvatarClick}
-            >
-              <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-center text-sm font-medium px-2">
-                {avatarPreview ? 'Change Photo' : 'Add Photo'}
-              </span>
-            </div>
-          </div>
-        </div>
-        <input 
-          type="file"
-          accept="image/*"
-          ref={avatarInputRef}
-          onChange={handleAvatarUpload}
-          className="hidden"
-          id="avatar-upload-input"
-        />
-        
         {/* Text Fields with updated style */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Name *</label>

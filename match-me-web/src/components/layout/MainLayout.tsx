@@ -1,60 +1,94 @@
+import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
+// import Header from './Header'; // Remove Header import
+import { Toaster, toast } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
 
-const MainLayout = () => {
+const MainLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const location = useLocation();
 
-  // Track window resize
+  // Handle window resize
   useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      // Auto-close mobile menu when resizing to desktop
-      if (window.innerWidth >= 768) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-    
+    const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const isMobile = windowWidth <= 768; // Tailwind's md breakpoint
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const isMobile = windowWidth < 768;
-
   return (
     <div className="flex min-h-screen bg-cream overflow-x-hidden">
       <Sidebar isMobileMenuOpen={isMobileMenuOpen} toggleMobileMenu={toggleMobileMenu} />
       
-      <main className={`flex-1 transition-all duration-300 overflow-x-hidden ${isMobile ? 'ml-0 pt-14' : 'ml-64'}`}>
-        {/* Mobile header - Fixed position */}
+      {/* Adjust main content margin based on sidebar state */}
+      <main className={`flex-1 transition-all duration-300 overflow-y-auto ${isMobile ? 'pt-0' : 'ml-64'}`}>
+        {/* Mobile header - Placeholder for potential future header */}
         {isMobile && (
-          <div className="fixed top-0 left-0 right-0 h-14 bg-white z-20 shadow-sm flex items-center px-4">
-            <button 
-              onClick={toggleMobileMenu}
-              className="p-2 rounded-full text-gray-700 hover:bg-gray-100 transition-colors"
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
-            {/* <h1 className="text-lg font-semibold text-center flex-1">Match Me</h1> */}
-          </div>
+           <div className="fixed top-0 left-0 right-0 z-40 bg-white shadow-md p-4 flex justify-between items-center lg:hidden">
+             <button onClick={toggleMobileMenu}> {/* Hamburger icon or similar */}
+               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
+             </button>
+             {/* Optional: Mobile Title/Logo */}
+             <span className="font-semibold">MatchMe</span>
+           </div>
         )}
-        <Outlet key={location.pathname} />
+
+        {/* Add padding top for mobile to account for fixed header */} 
+        <div className={`${isMobile ? 'pt-16' : 'pt-0'} p-4 sm:p-6`}>
+           <Outlet key={location.pathname} />
+        </div>
       </main>
+
+      {/* Toaster component added here */}
+      <Toaster 
+        position="top-center" 
+        reverseOrder={false}
+        toastOptions={{
+          // Default options
+          duration: 3000,
+          style: {
+            background: '#333',
+            color: '#fff',
+            fontSize: '14px',
+          },
+          // Success specific options
+          success: {
+            duration: 3000,
+            style: {
+              background: 'rgb(168 85 247)', // Purple-500
+              color: 'white',
+            },
+            iconTheme: {
+              primary: 'white',
+              secondary: 'rgb(168 85 247)', // Purple-500
+            },
+          },
+          // Error specific options
+          error: {
+            duration: 4000,
+            style: {
+              background: 'rgb(239 68 68)', // Red-500
+              color: 'white',
+            },
+             iconTheme: {
+              primary: 'white',
+              secondary: 'rgb(239 68 68)', // Red-500
+            },
+          },
+        }}
+      />
     </div>
   );
 };

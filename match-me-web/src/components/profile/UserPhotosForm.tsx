@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User } from '../../types';
 import { motion } from 'framer-motion';
 
 interface UserPhotosFormProps {
-  user: User;
   onSubmit: (formData: FormData) => Promise<void>;
   onCancel: () => void;
 }
@@ -12,14 +10,12 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 const MAX_PHOTOS = 10;
 
 const UserPhotosForm: React.FC<UserPhotosFormProps> = ({ 
-  user, 
   onSubmit, 
   onCancel 
 }) => {
   // State Management
-  const [existingPhotos, setExistingPhotos] = useState<string[]>(user.photos || []);
   const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
-  const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([]); // For Data URLs of new photos
+  const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Refs
@@ -39,12 +35,11 @@ const UserPhotosForm: React.FC<UserPhotosFormProps> = ({
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
-      const currentTotalPhotos = existingPhotos.length + newPhotoFiles.length;
-      const availableSlots = MAX_PHOTOS - currentTotalPhotos;
+      const availableSlots = MAX_PHOTOS;
 
       if (files.length > availableSlots) {
-        alert(`You can only add ${availableSlots} more photos (Max ${MAX_PHOTOS} total). ${files.length - availableSlots} files were skipped.`);
-        files.splice(availableSlots); // Keep only the allowed number
+        alert(`You selected ${files.length} files, but can only upload ${availableSlots} at a time in this batch. ${files.length - availableSlots} files were skipped.`);
+        files.splice(availableSlots);
       }
 
       const validFiles: File[] = [];
@@ -61,7 +56,6 @@ const UserPhotosForm: React.FC<UserPhotosFormProps> = ({
           return;
         }
         validFiles.push(file);
-        // Generate object URL for preview
         previewPromises.push(Promise.resolve(URL.createObjectURL(file)));
       });
 
@@ -77,23 +71,16 @@ const UserPhotosForm: React.FC<UserPhotosFormProps> = ({
         alert(`Skipped files:\n${skippedFiles.join('\n')}`);
       }
       
-      // Clear the input value
       if (e.target) e.target.value = ''; 
     }
   };
 
   // Photo removal handlers
-  const handleRemoveExistingPhoto = (indexToRemove: number) => {
-    setExistingPhotos(prev => prev.filter((_, i) => i !== indexToRemove));
-  };
-
   const handleRemoveNewPhoto = (indexToRemove: number) => {
-    // Revoke the object URL before removing the preview
     const previewToRemove = newPhotoPreviews[indexToRemove];
     if (previewToRemove) {
         URL.revokeObjectURL(previewToRemove);
     }
-    
     setNewPhotoFiles(prev => prev.filter((_, i) => i !== indexToRemove));
     setNewPhotoPreviews(prev => prev.filter((_, i) => i !== indexToRemove));
   };
@@ -101,47 +88,32 @@ const UserPhotosForm: React.FC<UserPhotosFormProps> = ({
   // Form Submission
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || newPhotoFiles.length === 0) return;
     setIsSubmitting(true);
     
     const data = new FormData();
 
-    // Append new photo files
-    newPhotoFiles.forEach(file => {
-      data.append('userPhotos', file); // Backend expects 'userPhotos' for new user images
+    newPhotoFiles.forEach((file, index) => {
+      data.append('photos', file);
     });
 
-    // Append existing photo URLs to keep
-    if (existingPhotos.length > 0) {
-      existingPhotos.forEach(url => {
-        data.append('photos', url); // Backend expects 'photos' for the list of URLs to keep/set
-      });
-    } else {
-      // Signal to clear photos if the existing list is now empty
-      data.append('photos', '');
-    }
-
-    console.log("Submitting User Photos FormData:");
+    console.log("Submitting New Photos FormData:");
     for (let [key, value] of data.entries()) { 
-      console.log(key, value); 
+      console.log(key, value instanceof File ? value.name : value);
     }
 
     try {
-      await onSubmit(data); // Call the passed onSubmit function
+      await onSubmit(data);
+      setNewPhotoFiles([]);
+      setNewPhotoPreviews([]);
     } catch (error) {
-      console.error("Error submitting user photos:", error);
-      alert("Failed to save photos. Please try again."); 
+      console.error("Error submitting new photos:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Helper to get display URL for existing photos
-  const getExistingPhotoDisplayUrl = (url: string) => {
-      return url.startsWith('/uploads/') ? `${API_BASE_URL}${url}` : url;
-  };
-  
-  const totalPhotos = existingPhotos.length + newPhotoFiles.length;
+  const totalNewPhotos = newPhotoFiles.length;
 
   return (
     <motion.div 
@@ -158,7 +130,7 @@ const UserPhotosForm: React.FC<UserPhotosFormProps> = ({
       >
         {/* Header */} 
         <div className="p-5 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
-          <h2 className="text-lg font-semibold text-purple-700">Edit My Photos ({totalPhotos}/{MAX_PHOTOS})</h2>
+          <h2 className="text-lg font-semibold text-purple-700">Add New Photos</h2>
           <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -166,38 +138,9 @@ const UserPhotosForm: React.FC<UserPhotosFormProps> = ({
         
         {/* Form Content */} 
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-grow custom-scrollbar space-y-6">
-          {/* Existing Photos */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Current Photos</label>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-              {existingPhotos.length > 0 ? (
-                existingPhotos.map((url, index) => (
-                  <div key={`existing-${index}`} className="relative group aspect-square">
-                    <img 
-                      src={getExistingPhotoDisplayUrl(url)} 
-                      alt={`Existing photo ${index + 1}`} 
-                      className="object-cover w-full h-full rounded-lg shadow-sm bg-gray-100"
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder-image.png'; }}
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => handleRemoveExistingPhoto(index)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                      aria-label="Remove existing photo"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-gray-500 col-span-full">No photos uploaded yet.</p>
-              )}
-            </div>
-          </div>
-
           {/* New Photo Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Add New Photos</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Photos to Upload</label>
              {/* Hidden file input */}
              <input 
               type="file" 
@@ -207,19 +150,17 @@ const UserPhotosForm: React.FC<UserPhotosFormProps> = ({
               onChange={handlePhotoUpload}
               multiple
             />
-            {/* Add button (conditionally rendered) */}
-            {totalPhotos < MAX_PHOTOS && (
-                <button
-                  type="button"
-                  onClick={handlePhotoClick}
-                  className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center text-gray-400 hover:border-purple-400 hover:text-purple-500 transition mb-4"
-                >
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                   </svg>
-                  Add Photos ({MAX_PHOTOS - totalPhotos} slots left)
-                </button>
-            )}
+            {/* Add button */}
+            <button
+              type="button"
+              onClick={handlePhotoClick}
+              className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center text-gray-400 hover:border-purple-400 hover:text-purple-500 transition mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+               </svg>
+              Add Photos
+            </button>
 
             {/* Display newly selected files previews */}
             {newPhotoPreviews.length > 0 && (
@@ -243,32 +184,25 @@ const UserPhotosForm: React.FC<UserPhotosFormProps> = ({
                 ))}
               </div>
             )}
-             {totalPhotos >= MAX_PHOTOS && (
-                <p className="text-sm text-center text-gray-500 mt-2">Maximum number of photos reached.</p>
-             )}
           </div>
         </form>
 
         {/* Footer Actions */} 
-        <div className="p-5 border-t border-gray-100 flex justify-end items-center flex-shrink-0 bg-gray-50">
+        <div className="p-4 sm:p-6 border-t border-gray-100 bg-white flex justify-end space-x-3 flex-shrink-0">
           <button 
             type="button" 
             onClick={onCancel}
-            className="px-4 py-2 mr-3 border border-gray-300 rounded-full text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="px-4 py-2 border border-gray-300 rounded-full text-sm text-gray-700 hover:bg-gray-50 transition"
           >
             Cancel
           </button>
           <button 
-            type="button" // Changed to type="button" to prevent implicit form submission
-            onClick={handleSubmit} // Call handleSubmit explicitly
-            disabled={isSubmitting || (newPhotoFiles.length === 0 && JSON.stringify(existingPhotos) === JSON.stringify(user.photos || []))} // Disable if no changes
-            className={`px-6 py-2 border border-transparent rounded-full shadow-sm text-sm font-medium text-white ${
-              isSubmitting || (newPhotoFiles.length === 0 && JSON.stringify(existingPhotos) === JSON.stringify(user.photos || []))
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-softpink hover:bg-pink-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500'
-            }`}
+            type="submit"
+            onClick={handleSubmit}
+            disabled={isSubmitting || newPhotoFiles.length === 0}
+            className={`px-4 py-2 rounded-full text-sm text-white ${isSubmitting || newPhotoFiles.length === 0 ? 'bg-indigo-300 cursor-not-allowed' : 'bg-softpink hover:bg-pink-500'} transition`}
           >
-            {isSubmitting ? 'Saving...' : 'Save Photos'}
+            {isSubmitting ? 'Uploading...' : `Upload ${newPhotoFiles.length} Photo(s)`}
           </button>
         </div>
       </div>

@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "msw": "^2.7.3"
+  },
+  "dependencies": {
+    "react-hot-toast": "^2.5.2"
   }
 }

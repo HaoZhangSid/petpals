@@ -358,9 +358,9 @@ This checklist tracks the development progress based on the defined requirements
 
 **Phase 2: Matching & Connections**
 
-*   **[ ] Backend:** Implement recommendation logic & `GET /recommendations` API.
-*   **[ ] Backend:** Implement Connection APIs (`POST /connections`, `GET /connections/requests`, `PUT /connections/requests/{requestId}`, `GET /connections`, `DELETE /connections/{connectionId}`).
-*   **[ ] Backend:** Implement fine-grained authorization logic (e.g., profile visibility, pet ownership checks).
+*   **[DONE - Basic]** Backend: Implement recommendation logic & `GET /recommendations` API (excludes self/connections, limit 10).
+*   **[DONE]** Backend: Implement Connection APIs (`POST /connections`, `GET /connections/requests`, `PUT /connections/requests/{requestId}`, `GET /connections`, `DELETE /connections/{connectionId}`).
+*   **[DONE]** Backend: Implement fine-grained authorization logic (Profile: public view; Pet: owner modify).
 *   **[ ] Frontend:** Implement `Discover.tsx` page UI & logic (display recommendations, accept/dismiss).
 *   **[ ] Frontend:** Implement `Connections.tsx` page UI & logic (display connections, manage requests).
 *   **[ ] Testing:** Test recommendation generation and connection workflows.
