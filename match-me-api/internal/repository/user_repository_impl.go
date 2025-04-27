@@ -79,37 +79,56 @@ func (r *postgresUserRepository) FindUsers(ctx context.Context, excludeUserID uu
 	return users, nil
 }
 
-// UpdateUser updates an existing user's information based on the provided user object.
-// It uses Save for a full update, overwriting all fields based on the provided 'user' model.
-func (r *postgresUserRepository) UpdateUser(ctx context.Context, user *models.User) error {
-	if user == nil || user.ID == uuid.Nil {
-		return fmt.Errorf("invalid user object provided for update")
+// UpdateUser updates specific fields of an existing user using a map.
+func (r *postgresUserRepository) UpdateUser(ctx context.Context, userID uuid.UUID, updates map[string]interface{}) error {
+	if userID == uuid.Nil {
+		return errors.New("invalid user ID provided for update")
+	}
+	if len(updates) == 0 {
+		log.Printf("UpdateUser called for user %s with no fields to update.", userID)
+		return nil // Nothing to update
 	}
 
-	// Ensure UpdatedAt is set if not handled by GORM hooks/tags
-	// user.UpdatedAt = time.Now()
+	// Ensure UpdatedAt is always set on update
+	// GORM often handles this automatically if the field exists, but explicit is safer
+	// updates["updated_at"] = time.Now() // Uncomment if GORM hooks aren't reliably setting it
 
-	result := r.db.WithContext(ctx).Save(user)
+	// Use Model(&models.User{}) to specify the table and Updates map for partial update
+	result := r.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", userID).Updates(updates)
+
 	if result.Error != nil {
-		// Check if the error is because the record wasn't found
-		var exists int64
-		_ = r.db.Model(&models.User{}).Where("id = ?", user.ID).Count(&exists) // Check existence even if save failed
-		if exists == 0 {
-			return fmt.Errorf("failed to update user %s (not found): %w", user.ID, gorm.ErrRecordNotFound)
-		}
-		// Return the original save error if user exists but save failed for other reasons
-		return fmt.Errorf("gorm error saving user %s: %w", user.ID, result.Error)
-	}
-	// GORM's Save returns RowsAffected == 0 if the record is not found OR if no changes were detected.
-	if result.RowsAffected == 0 {
-		// Explicitly check existence if RowsAffected is 0 to differentiate 'not found' from 'no change'
-		var exists int64
-		if err := r.db.Model(&models.User{}).Where("id = ?", user.ID).Count(&exists).Error; err == nil && exists == 0 {
-			return fmt.Errorf("failed to update user %s (not found): %w", user.ID, gorm.ErrRecordNotFound)
-		}
-		// If user exists, 0 rows affected means no changes were made.
-		log.Printf("GORM Save for user %s resulted in 0 rows affected (record found but no changes detected).", user.ID)
+		// Log the detailed GORM error
+		log.Printf("GORM error updating user %s: %v", userID, result.Error)
+		// Check for specific errors if needed, e.g., constraint violations
+		return fmt.Errorf("failed to update user %s: %w", userID, result.Error)
 	}
 
+	// Check if the record was actually found and updated
+	if result.RowsAffected == 0 {
+		// Verify if the user actually exists to differentiate 'not found' from 'no changes needed'
+		var exists int64
+		err := r.db.Model(&models.User{}).Where("id = ?", userID).Count(&exists).Error
+		if err != nil {
+			log.Printf("Error checking existence of user %s after 0 rows affected update: %v", userID, err)
+			// Fall through to return a generic error as we couldn't confirm existence
+		} else if exists == 0 {
+			log.Printf("Update failed for user %s: record not found.", userID)
+			return gorm.ErrRecordNotFound // Return specific error for not found
+		}
+		// If exists > 0, then 0 rows affected might mean the data was identical
+		log.Printf("Update for user %s resulted in 0 rows affected (user exists, data might be unchanged).", userID)
+		// Consider returning nil here, as the desired state might already be achieved
+		// return fmt.Errorf("user %s found, but update resulted in 0 rows affected (data likely unchanged)", userID)
+	}
+
+	log.Printf("Successfully updated fields for user %s. Rows affected: %d", userID, result.RowsAffected)
 	return nil
 }
+
+/* // REMOVED Incorrect User Recommendation Repository Method
+// FindUsersWithinRadius finds users whose coordinates are within a given radius (in meters)
+// from the provided center point WKT (Well-Known Text), excluding a specific user ID.
+func (r *postgresUserRepository) FindUsersWithinRadius(ctx context.Context, centerPointWKT string, radiusMeters float64, excludeUserID uuid.UUID, limit int) ([]models.User, error) {
+    // ... implementation removed ...
+}
+*/

@@ -42,14 +42,14 @@ Users can manage multiple pet profiles and modify any profile information at any
 - (Optional) Support for finding local pet-friendly venues and events
 
 ### Recommendations
-- Maximum of 10 recommendations at a time
+- Generates recommendations for a specific **pet** owned by the logged-in user, suggesting other nearby pets as potential playmates.
+- Maximum of 10 recommendations at a time (configurable default).
 - Prioritized matching based on:
-  - Location proximity (within user-defined distance)
-  - Pet compatibility (e.g., similar type/size, energy level, complementary personality traits)
-  - Owner interests and activity preferences
-  - (Optional) Owner schedule availability
-- Option to accept (initiating connection request) or dismiss recommendations
-- Dismissed recommendations won't appear again for a defined period
+  - **Owner location proximity** (within owner's defined distance in their profile: `max_recommendation_radius_km`).
+  - Pet compatibility (e.g., similar type/size, energy level, complementary personality traits) - *Future Enhancement*
+  - Owner interests and activity preferences - *Future Enhancement*
+- Excludes the user's own pets and pets of users they might already be connected with or blocked by - *Refinement Needed*
+- API endpoint likely `GET /api/v1/pets/{petId}/recommendations`.
 
 ### Connections
 - Send connection requests (e.g., initiated from recommendations or user profiles)
@@ -225,21 +225,29 @@ Defines RESTful endpoints for core resources. `/api/v1` prefix assumed.
 - `POST /me/photos` - Upload photo(s) for the current user (use form fields `photos`, `caption`, `isPrimary`). The first photo can be set as primary if `isPrimary=true`.
 - `POST /me/pets/{petId}/photos` - Upload photo(s) for a specific pet (use form fields `photos`, `caption`, `isPrimary`). The first photo can be set as primary if `isPrimary=true`.
 
-**Other Users:**
+**Pets (Owned by current user & Public):**
+- `GET /me/pets` - List current user's pets.
+- `POST /me/pets` - Add a new pet for the current user.
+- `GET /me/pets/{petId}` - Get details of a specific pet owned by the user.
+- `PUT /me/pets/{petId}` - Update a specific pet owned by the user.
+- `DELETE /me/pets/{petId}` - Delete a specific pet owned by the user.
+- `POST /me/pets/{petId}/photos` - Upload photo(s) for a specific pet owned by the user.
+- `GET /pets/{petId}/recommendations` - **(NEW)** Get potential playmate recommendations for a specific pet owned by the user.
+- `GET /pets/{petId}/photos` - List photos of a specific pet (public).
+
+**Other Users (Public Views):**
 - `GET /users/{userId}` - Get basic public info of another user
 - `GET /users/{userId}/profile` - Get detailed public profile of another user
 - `GET /users/{userId}/pets` - List public pets of another user
-- `GET /pets/{petId}/photos` - List photos of a specific pet
 
-**Photos:**
-- `DELETE /photos/{photoId}` - Delete a specific photo (user or pet)
-- `PATCH /photos/{photoId}/primary` - Set a specific photo as the primary/avatar for its owner (user or pet)
+**Photos (Generic Actions):**
+- `DELETE /photos/{photoId}` - Delete a specific photo (user or pet, requires ownership)
+- `PATCH /photos/{photoId}/primary` - Set a specific photo as primary (requires ownership)
 - `PATCH /photos/{photoId}` - (TODO) Update a photo's caption
 - `PUT /owner/{ownerType}/{ownerId}/photos/order` - (TODO) Reorder photos for a user or pet
 
-**Recommendations:**
-- `GET /recommendations` - Get a list of user/pet recommendations
-- `POST /recommendations/{recommendationId}/dismiss` - Dismiss a recommendation
+**Search/Discovery:**
+- `GET /pets/search` - Search/filter pets based on various criteria (location, type, etc.)
 
 **Connections:**
 - `GET /connections` - List current user's connections (accepted status)
@@ -358,15 +366,15 @@ This checklist tracks the development progress based on the defined requirements
 
 **Phase 2: Matching & Connections**
 
-*   **[DONE - Basic]** Backend: Implement recommendation logic & `GET /recommendations` API (excludes self/connections, limit 10).
-*   **[ ] Backend:** Implement **Pet-Specific Recommendation** logic & `GET /me/pets/{petId}/recommendations` API (based on owner proximity, pet type, activity level, limit 10 random).
+*   **[DONE]** Backend: Implement **Pet-Specific Recommendation** logic & `GET /pets/{petId}/recommendations` API (based on owner proximity, limit 10).
+*   **[ ] Backend:** Enhance pet recommendation filtering (pet type, activity level etc.).
 *   **[ ] Backend:** Implement **Pet Search/Filter** logic & **`GET /pets/search`** API for the Discover page (supporting various filters like location/distance, type, breed, activity, etc., with pagination).
 *   **[DONE]** Backend: Implement Connection APIs (`POST /connections`, `GET /connections/requests`, `PUT /connections/requests/{requestId}`, `GET /connections`, `DELETE /connections/{connectionId}`).
-*   **[DONE]** Backend: Implement fine-grained authorization logic (Profile: public view; Pet: owner modify).
+*   **[DONE - Basic]** Backend: Implement basic authorization logic (Profile: public view; Pet: owner modify).
 *   **[ ] Frontend:** Implement **Discover Page (`Discover.tsx`)** UI & logic for **searching/filtering** pets (using the new `GET /pets/search` API).
-*   **[ ] Frontend:** Implement **display of Recommendations** within the user's pet profile view (fetching from `/me/pets/{petId}/recommendations`).
+*   **[ ] Frontend:** Implement **display of Recommendations** within the user's pet profile view (fetching from `GET /pets/{petId}/recommendations`).
 *   **[ ] Frontend:** Implement `Connections.tsx` page UI & logic (display connections, manage requests).
-*   **[ ] Testing:** Test recommendation generation and connection workflows.
+*   **[ ] Testing:** Test pet recommendation generation and connection workflows.
 *   **[ ] Testing:** Test pet search/filtering functionality.
 
 **Phase 3: Communication Channel**

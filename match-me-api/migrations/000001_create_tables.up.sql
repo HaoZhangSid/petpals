@@ -1,6 +1,9 @@
 -- 启用UUID扩展
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- 启用PostGIS扩展
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 -- 创建用户表
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

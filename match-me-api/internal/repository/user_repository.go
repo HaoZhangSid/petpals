@@ -19,8 +19,12 @@ type UserRepository interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (*models.User, error)
 
 	// UpdateUser updates an existing user's information based on the provided user object.
-	UpdateUser(ctx context.Context, user *models.User) error
+	UpdateUser(ctx context.Context, userID uuid.UUID, updates map[string]interface{}) error
 
 	// FindUsers retrieves a list of users, excluding a specific user ID, with a limit.
 	FindUsers(ctx context.Context, excludeUserID uuid.UUID, limit int) ([]models.User, error)
+
+	// FindUsersWithinRadius finds users whose coordinates are within a given radius (in meters)
+	// from the provided center point WKT (Well-Known Text).
+	// FindUsersWithinRadius(ctx context.Context, centerPointWKT string, radiusMeters float64, excludeUserID uuid.UUID, limit int) ([]models.User, error)
 }

@@ -107,4 +107,11 @@ func (h *UserHandler) GetCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+/* // REMOVED Incorrect User Recommendation Handler
+// GetRecommendations handles requests to get user recommendations for the logged-in user.
+func (h *UserHandler) GetRecommendations(c *gin.Context) {
+	// ... implementation removed ...
+}
+*/
+
 // TODO: Add GetUserProfile handler if needed for public profiles

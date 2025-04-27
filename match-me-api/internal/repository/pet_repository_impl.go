@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 
 	"github.com/HaoZhangSid/match-me-api/internal/models"
 	"github.com/google/uuid"
@@ -217,4 +219,56 @@ func (r *postgresPetRepository) DeletePet(ctx context.Context, petID uuid.UUID) 
 	}
 
 	return nil
+}
+
+// FindNearbyPets finds pets whose owners are within a given radius (in meters)
+// from the provided center point WKT, excluding specific pet and owner IDs.
+// It returns pet details along with the calculated distance.
+func (r *postgresPetRepository) FindNearbyPets(ctx context.Context, centerPointWKT string, radiusMeters float64, excludePetID uuid.UUID, excludeOwnerID uuid.UUID, limit int) ([]models.RecommendedPetInfo, error) {
+	var results []models.RecommendedPetInfo
+
+	if centerPointWKT == "" {
+		return nil, errors.New("center point WKT cannot be empty for nearby pets query")
+	}
+	if radiusMeters < 0 {
+		return nil, errors.New("radius cannot be negative for nearby pets query")
+	}
+
+	// Use Raw SQL for the complex query involving ST_DWithin and ST_Distance
+	// GORM's standard methods struggle with selecting calculated fields like distance easily.
+	// We select all columns from pets (p.*) and the calculated distance.
+	sql := `
+        SELECT p.*, ST_Distance(u.coordinates, ?::geography) as distance_meters
+        FROM pets p
+        JOIN users u ON p.user_id = u.id
+        WHERE u.coordinates IS NOT NULL
+          AND p.deleted_at IS NULL
+          AND p.id <> ?
+          AND p.user_id <> ?
+          AND ST_DWithin(u.coordinates, ?::geography, ?)
+        ORDER BY distance_meters ASC
+        LIMIT ?
+    `
+
+	// Execute the raw query and scan results into the RecommendedPetInfo struct
+	// Note the order of parameters must match the placeholders (?) in the SQL string.
+	queryResult := r.db.WithContext(ctx).Raw(sql,
+		centerPointWKT,
+		excludePetID,
+		excludeOwnerID,
+		centerPointWKT, // Used again for ST_DWithin
+		radiusMeters,
+		limit,
+	).Scan(&results)
+
+	if queryResult.Error != nil {
+		log.Printf("Error finding nearby pets: %v. Center: %s, Radius: %.2f, ExcludePet: %s, ExcludeOwner: %s",
+			queryResult.Error, centerPointWKT, radiusMeters, excludePetID, excludeOwnerID)
+		return nil, fmt.Errorf("database error finding nearby pets: %w", queryResult.Error)
+	}
+
+	log.Printf("Found %d nearby pets (limit %d) for query: Center: %s, Radius: %.2f, ExcludePet: %s, ExcludeOwner: %s",
+		len(results), limit, centerPointWKT, radiusMeters, excludePetID, excludeOwnerID)
+
+	return results, nil
 }

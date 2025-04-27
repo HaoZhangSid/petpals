@@ -101,36 +101,54 @@ func (s *recommendationService) populateUserPhotoURLs(ctx context.Context, user 
 		return fmt.Errorf("cannot populate photos for nil user")
 	}
 
+	// Reset fields
+	user.AvatarURL = nil
+	user.Photos = []models.Photo{} // Initialize Photos slice
+
 	photos, err := s.photoRepo.GetPhotosByOwner(ctx, "user", user.ID)
 	if err != nil {
 		// Consider gorm.ErrRecordNotFound as non-fatal, meaning no photos
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			user.AvatarURL = nil
-			user.PhotoURLs = []string{}
+			// user.PhotoURLs = []string{} // REMOVE THIS LINE
+			user.Photos = []models.Photo{} // Ensure photos is empty
 			return nil
 		}
 		return fmt.Errorf("failed to get photos for user %s: %w", user.ID, err)
 	}
 
-	// Sort photos by order
+	// Assign photos
+	user.Photos = photos
+
+	// Sort photos by order (if necessary for determining avatar)
 	sort.Slice(photos, func(i, j int) bool {
+		// Handle potential nil pointers if Order can be nil, or adjust sorting logic
+		// Assuming Order is always non-nil for simplicity here
 		return photos[i].Order < photos[j].Order
 	})
 
+	// Determine Avatar URL
 	var avatarURL *string
-	otherPhotoURLs := []string{}
+	// otherPhotoURLs := []string{} // REMOVE THIS LINE
 
 	for _, p := range photos {
 		if p.IsPrimary {
 			urlCopy := p.URL // Make a copy
 			avatarURL = &urlCopy
-		} else {
-			otherPhotoURLs = append(otherPhotoURLs, p.URL)
-		}
+			break // Found primary
+		} // else {
+		// 	otherPhotoURLs = append(otherPhotoURLs, p.URL) // REMOVE THIS LINE
+		// }
+	}
+
+	// If no primary, optionally use the first photo as avatar
+	if avatarURL == nil && len(user.Photos) > 0 {
+		urlCopy := user.Photos[0].URL
+		avatarURL = &urlCopy
 	}
 
 	user.AvatarURL = avatarURL
-	user.PhotoURLs = otherPhotoURLs
+	// user.PhotoURLs = otherPhotoURLs // REMOVE THIS LINE
 
 	return nil
 }

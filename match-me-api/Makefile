@@ -1,4 +1,4 @@
-.PHONY: build run clean migrate-up migrate-down test
+.PHONY: build run clean migrate-up migrate-down test seed
 
 # 应用名称
 APP=match-me-api
@@ -30,6 +30,10 @@ migrate-up:
 migrate-down:
 	migrate -path migrations -database "$(DB_URL)" down
 
+# 运行数据库填充脚本
+seed:
+	go run ./scripts/seed.go
+
 # 单元测试
 test:
 	go test ./... -v
@@ -43,6 +47,7 @@ help:
 	@echo "make clean      - 清理构建文件"
 	@echo "make migrate-up - 运行数据库迁移"
 	@echo "make migrate-down - 回滚数据库迁移"
+	@echo "make seed       - 运行数据库填充脚本 (./scripts/seed.go)"
 	@echo "make test       - 运行单元测试"
 
 # 默认目标

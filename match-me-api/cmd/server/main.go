@@ -53,7 +53,7 @@ func main() {
 	authService := service.NewAuthService(userRepo, cfg)
 	photoService := service.NewPhotoService(photoRepo, userRepo, petRepo, fileStore)
 	userService := service.NewUserService(userRepo, photoRepo)
-	petService := service.NewPetService(petRepo, photoRepo)
+	petService := service.NewPetService(petRepo, photoRepo, userRepo)
 	connService := service.NewConnectionService(connRepo, userRepo)
 	recService := service.NewRecommendationService(userRepo, connRepo, photoRepo)
 
@@ -110,6 +110,10 @@ func main() {
 			// Pet Photo Route (relative to specific pet)
 			mePetsRoutes.POST("/:petId/photos", photoHandler.UploadPetPhotos) // POST /api/v1/me/pets/:petId/photos
 		}
+
+		// --- Pet Recommendation Route ---
+		// Note: Placed directly under /api/v1 for now, could be nested under /me/pets/:petId too
+		apiV1.GET("/pets/:petId/recommendations", petHandler.GetPetRecommendations)
 
 		// Generic Photo Routes (remain top-level under /api/v1)
 		apiV1.DELETE("/photos/:photoId", photoHandler.DeletePhoto)

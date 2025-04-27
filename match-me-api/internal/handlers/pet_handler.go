@@ -10,6 +10,7 @@ import (
 
 	"strings"
 
+	"github.com/HaoZhangSid/match-me-api/internal/middleware"
 	"github.com/HaoZhangSid/match-me-api/internal/models"
 	"github.com/HaoZhangSid/match-me-api/internal/service"
 	"github.com/gin-gonic/gin"
@@ -204,6 +205,58 @@ func (h *PetHandler) DeletePet(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// GetPetRecommendations handles requests to get recommendations for a specific pet.
+func (h *PetHandler) GetPetRecommendations(c *gin.Context) {
+	// 1. Get PetID from URL parameter
+	petIDStr := c.Param("petId")
+	petID, err := uuid.Parse(petIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid pet ID format"})
+		return
+	}
+
+	// 2. Get requesting UserID from context
+	userIDAny := c.Request.Context().Value(middleware.UserIDKey) // Use constant
+	if userIDAny == nil {
+		log.Println("Error getting user ID from context in GetPetRecommendations")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+		return
+	}
+	requestingUserID, ok := userIDAny.(uuid.UUID)
+	if !ok {
+		log.Println("User ID in context is not UUID in GetPetRecommendations")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid User ID in context"})
+		return
+	}
+
+	log.Printf("[Handler /pets/%s/recommendations GET] Request received by user %s", petIDStr, requestingUserID)
+
+	// 3. Call the PetService to get recommendations
+	recommendations, err := h.petService.GetPetRecommendations(c.Request.Context(), petID, requestingUserID)
+	if err != nil {
+		// Handle potential service errors
+		log.Printf("[Handler /pets/%s/recommendations GET] Error calling service: %v", petIDStr, err)
+		if errors.Is(err, service.ErrNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		} else if errors.Is(err, service.ErrValidation) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}) // e.g., owner missing location/radius
+		} else if errors.Is(err, service.ErrUnauthorized) {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()}) // e.g., trying to get recs for someone else's pet
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get pet recommendations"})
+		}
+		return
+	}
+
+	// 4. Return the list of recommended pets (DTOs)
+	log.Printf("[Handler /pets/%s/recommendations GET] Successfully retrieved %d recommendations", petIDStr, len(recommendations))
+	// Ensure empty array `[]` is returned instead of `null` if the list is empty
+	if recommendations == nil {
+		recommendations = []models.PetRecommendation{}
+	}
+	c.JSON(http.StatusOK, recommendations)
 }
 
 // TODO: Add handler for GetPet

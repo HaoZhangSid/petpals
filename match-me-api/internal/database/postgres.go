@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/HaoZhangSid/match-me-api/config"
-	"github.com/HaoZhangSid/match-me-api/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -47,8 +46,9 @@ func Connect() error {
 
 // migrateModels 迁移所有必要的数据库模型
 func migrateModels() error {
-	log.Println("Running database auto-migration check")
+	log.Println("Running database auto-migration check - GORM AutoMigrate is DISABLED. Migrations handled by external tool.")
 
+	/* // GORM AutoMigrate disabled to rely on explicit SQL migrations
 	err := DB.AutoMigrate(
 		&models.User{},
 		&models.Pet{},
@@ -63,7 +63,8 @@ func migrateModels() error {
 		log.Printf("Auto-migration failed: %v", err)
 		return err
 	}
+	*/
 
-	log.Println("Database auto-migration check completed successfully")
+	log.Println("Database auto-migration check skipped. Using external migration tool.")
 	return nil
 }

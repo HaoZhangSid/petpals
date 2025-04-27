@@ -238,37 +238,45 @@ This document outlines the RESTful API endpoints for the PetPals backend.
 - **Response (401 Unauthorized):** User does not own this pet.
 - **Response (404 Not Found):** Pet not found.
 
-### `GET /me/pets/{petId}/recommendations`
-- **Description:** Retrieves a list of recommended pets (potential playmates) for a specific pet owned by the current user. Recommendations are based on owner proximity, pet type, and activity level.
+### `GET /pets/{petId}/recommendations`
+- **Description:** (Auth Required) Retrieves a list of recommended pets (potential playmates) for a specific pet owned by the current user. Recommendations are based on the owner's location proximity and their defined maximum recommendation radius. Excludes the user's own pets.
 - **Path Parameters:**
     - `petId` (UUID): The ID of the user's pet for which to get recommendations.
-- **Query Parameters (Optional - for future refinement):**
-    - `limit` (int, default: 10): Maximum number of recommendations to return.
-- **Response (200 OK):** Array of recommended Pet objects (structure similar to `GET /me/pets`, potentially a simplified version).
+- **Response (200 OK):** Array of `PetRecommendation` objects.
   ```json
   [
     {
-      "id": "recommended-pet-uuid-1",
-      "userId": "other-user-uuid",
+      "id": "recommended-pet-uuid-1", // Pet ID
       "name": "Luna",
       "type": "dog",
       "breed": "Labrador",
+      "age": 3.5,
       "gender": "female",
-      "activityLevel": "high",
-      "avatarUrl": "/uploads/pet/rec-pet-uuid-1/avatar.jpg",
-      "owner": { // Include basic owner info for context
-        "id": "other-user-uuid",
-        "name": "Jane Smith",
-        "location": "Cityville" // Crucial for verifying proximity logic
-      }
-      // Include other relevant fields? Bio? Personality?
-    },
-    // ... up to 'limit' pets
+      "weight": 28.0,
+      "bio": "Friendly dog looking for pals!",
+      "personality": ["playful", "friendly"],
+      "favorite_activities": ["fetch", "walks"],
+      "play_style": ["energetic"],
+      "activity_level": "high",
+      "is_neutered": true,
+      "is_vaccinated": true,
+      "is_microchipped": false,
+      "petAvatarUrl": "/uploads/pet/rec-pet-uuid-1/avatar.jpg",
+      "petPhotos": [
+          // Array of Photo objects for this pet
+          { "id": "photo-uuid", "url": "/uploads/...", "isPrimary": true, ... }
+      ],
+      "ownerId": "other-user-uuid",
+      "ownerName": "Jane Smith",
+      "ownerAvatarUrl": "/uploads/user/other-user-uuid/avatar.jpg",
+      "distanceMeters": 4567.89 // Calculated distance
+    }
+    // ... other recommended pets ...
   ]
   ```
-- **Response (401 Unauthorized):** User does not own the pet specified by `petId`.
+- **Response (401 Unauthorized):** User does not own the pet specified by `petId`, or token is invalid.
 - **Response (404 Not Found):** Pet specified by `petId` not found.
-- **Notes:** Excludes pets owned by the current user and potentially pets already connected/interacted with (TBD).
+- **Response (400 Bad Request):** If the owner hasn't set location or radius (currently returns empty list, could be 400).
 
 ---
 
@@ -403,35 +411,9 @@ This document outlines the RESTful API endpoints for the PetPals backend.
 
 ---
 
-## Recommendations
+## Recommendations (Old - REMOVED)
 
-**(Auth Required)**
-
-### `GET /recommendations`
-- **Description:** Retrieves a list of potential connection recommendations for the current user. Excludes self and existing connections. Limited to 10 results.
-- **Response (200 OK):** Array of recommendation objects (structure TBD, likely simplified User/Pet info). Example:
-  ```json
-  [
-    {
-      "userId": "recommended-user-uuid",
-      "userName": "Jane Doe",
-      "userAvatarUrl": "/uploads/...",
-      "userLocation": "Cityville",
-      "pets": [
-        {
-           "petId": "recommended-pet-uuid",
-           "petName": "Fluffy",
-           "petType": "cat",
-           "petAvatarUrl": "/uploads/..."
-           // ... other relevant matching info?
-        }
-      ],
-      "matchScore": 0.85 // Example, actual implementation might differ
-    }
-    // ... up to 10 recommendations
-  ]
-  ```
-- **Notes:** The exact recommendation logic and response structure might evolve.
+- ~~`GET /recommendations`~~ - *This endpoint has been removed and replaced by `GET /pets/{petId}/recommendations`.*
 
 ---
 

@@ -62,7 +62,7 @@ func LoadConfig() *Config {
 		AppEnv: getEnv("APP_ENV", "development"),
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnv("DB_PORT", "5432"), // Default to 5432
+			Port:     getEnv("DB_PORT", "5433"), // Default to 5432
 			User:     getEnv("DB_USER", "postgres"),
 			Password: getEnv("DB_PASSWORD", ""),        // Default to empty, should be set in .env
 			DBName:   getEnv("DB_NAME", "match_me_db"), // Default db name
