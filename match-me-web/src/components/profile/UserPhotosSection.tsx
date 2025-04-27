@@ -46,7 +46,7 @@ const PhotoItem: React.FC<PhotoItemProps> = ({
 
   const getFullUrl = (url: string | null | undefined): string | null => {
       if (!url) return null;
-      return url.startsWith('/uploads/') ? `${API_BASE_URL}${url}` : url;
+    return url.startsWith('/uploads/') ? `${API_BASE_URL}${url}` : url;
   }
 
   const fullUrl = getFullUrl(photo.url);
@@ -102,7 +102,7 @@ const PhotoItem: React.FC<PhotoItemProps> = ({
         src={getFullUrl(photo.url) ?? undefined}
         alt={`${user.name ?? 'User'} photo ${index + 1}`}
         className="w-full h-full object-cover bg-gray-200"
-        onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder-image.png'; }}
+        onError={(e) => { (e.target as HTMLImageElement).src = '/'; }}
       />
       {/* --- Restore Overlay --- */}
       
