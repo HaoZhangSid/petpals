@@ -35,6 +35,7 @@ go.work
 # Node dependencies
 /node_modules
 /uploads
+match-me-api/uploads/
 # Logs
 logs
 *.log
