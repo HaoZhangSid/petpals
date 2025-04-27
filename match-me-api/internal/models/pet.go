@@ -32,9 +32,11 @@ type Pet struct {
 	// Relationships
 	User User `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 
-	// Transient field for API responses (populated by service layer)
-	AvatarURL *string  `gorm:"-" json:"avatarUrl,omitempty"` // Primary photo URL
-	PhotoURLs []string `gorm:"-" json:"photoUrls,omitempty"` // Other photo URLs
+	// Let Repository handle loading via Preload, ignore field for GORM auto-processing
+	Photos []Photo `gorm:"-" json:"photos,omitempty"`
+
+	// Transient field for API responses (can be populated by service/repo)
+	AvatarURL *string `gorm:"-" json:"avatarUrl,omitempty"` // Primary photo URL
 }
 
 // PetUpdatePayload defines the structure for updating a pet.

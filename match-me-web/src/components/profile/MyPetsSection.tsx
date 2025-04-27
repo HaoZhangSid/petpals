@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useModal } from '../../contexts/ModalContext';
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import PetPhotosSection from '../pets/PetPhotosSection';
 
 interface MyPetsSectionProps {
   // Remove openAddPetModal prop, get from useModal hook instead
@@ -90,7 +91,7 @@ const MyPetsSection: React.FC = () => {
                 await deletePet(petToDelete.id);
                 toast.success(`${petToDelete.name} deleted successfully!`);
                 // setActivePet is handled inside deletePet action in store
-              } catch (error) {
+    } catch (error) {
                 toast.error(`Failed to delete ${petToDelete.name}.`);
                 console.error("Delete pet error:", error);
               }
@@ -188,10 +189,10 @@ const MyPetsSection: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-center mb-6">
-                  <img
-                    src={profileImageUrl}
-                    alt={activePet.name}
-                    className="w-32 h-32 rounded-full mx-auto mb-3 border-4 border-softpink bg-gray-200 object-cover"
+                      <img
+                        src={profileImageUrl}
+                        alt={activePet.name}
+                        className="w-32 h-32 rounded-full mx-auto mb-3 border-4 border-softpink bg-gray-200 object-cover"
                     onError={() => {
                        console.log(`Error loading ${profileImageUrl}, falling back to placeholder.`);
                        // Set state to the appropriate placeholder
@@ -314,40 +315,7 @@ const MyPetsSection: React.FC = () => {
               )}
             </div>
             <div className="bg-white rounded-2xl shadow-soft p-6">
-              <h2 className="text-xl font-bold text-purple-700 mb-4">{activePet.name}'s Photos</h2>
-              {/* Use optional chaining and photoUrls for now */}
-              {(activePet.photoUrls?.length || 0) > 0 ? (
-                <div className="grid grid-cols-3 gap-3">
-                   {/* Map over photoUrls with type annotations */}
-                  {activePet.photoUrls?.map((url: string, index: number) => {
-                    const fullUrl = url.startsWith('/uploads/') ? `${API_BASE_URL}${url}` : url;
-                        return (
-                          <div
-                        key={index} // Use index as key for now
-                        className="gallery-item overflow-hidden rounded-xl shadow-sm cursor-pointer aspect-square"
-                        // Temporarily disable lightbox for pet photos until data structure is confirmed
-                        // onClick={() => openLightbox(/* Needs adjustment */ index)} 
-                           >
-                            <img
-                          src={fullUrl}
-                              alt={`${activePet.name} photo ${index + 1}`}
-                          className="w-full h-full object-cover hover:opacity-90 transition duration-300 bg-gray-200"
-                          onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder-pet.png'; }}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-              ) : (
-                <p className="text-sm text-gray-500">No photos uploaded for {activePet.name} yet.</p>
-                    )}
-              {/* TODO: Add Upload button for pet photos, link to POST /me/pets/{petId}/photos */}
-                    <button
-                 onClick={() => alert('Pet photo upload not implemented yet.')}
-                 className="mt-4 w-full text-center py-2 text-sm text-skyblue hover:text-blue-600 transition"
-                    >
-                Upload Pet Photos (TODO)
-                    </button>
+              <PetPhotosSection petId={activePet.id} />
             </div>
           </div>
         </div>

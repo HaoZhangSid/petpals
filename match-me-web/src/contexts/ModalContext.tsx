@@ -1,8 +1,8 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { Pet } from '../types';
+import { Pet, Photo } from '../types';
 import PetProfileForm from '../components/profile/PetProfileForm';
+import PetPhotosForm from '../components/pets/PetPhotosForm';
 import { usePetStore } from '../store/petStore';
-import { api } from '../services/api';
 import { toast } from 'react-hot-toast';
 
 // Helper function to append data to FormData, handling null/undefined and booleans
@@ -26,7 +26,7 @@ const appendToFormData = (formData: FormData, key: string, value: any) => {
   }
 };
 
-// Context types
+// Context Type - Simplified, remove handleAddPet/handleUpdatePet logic signs
 interface ModalContextType {
   isAddPetModalOpen: boolean;
   openAddPetModal: () => void;
@@ -35,12 +35,16 @@ interface ModalContextType {
   editingPetData: Pet | null;
   openEditPetModal: (pet: Pet) => void;
   closeEditPetModal: () => void;
+  isUploadPhotoModalOpen: boolean;
+  uploadingPetId: string | null;
+  openUploadPhotoModal: (petId: string) => void;
+  closeUploadPhotoModal: () => void;
+  // Add handleUploadPhotos here if PetPhotosForm needs it externally?
+  // For now, assume PetPhotosForm calls store action directly or via onSuccess
 }
 
-// Create the context
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
-// Provider component
 interface ModalProviderProps {
   children: ReactNode;
 }
@@ -49,10 +53,13 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
   const [isAddPetModalOpen, setIsAddPetModalOpen] = useState(false);
   const [isEditPetModalOpen, setIsEditPetModalOpen] = useState(false);
   const [editingPetData, setEditingPetData] = useState<Pet | null>(null);
-
-  const addPetToStore = usePetStore(state => state.addPet);
-  const updatePetInStore = usePetStore(state => state.updatePet);
+  const [isUploadPhotoModalOpen, setIsUploadPhotoModalOpen] = useState(false);
+  const [uploadingPetId, setUploadingPetId] = useState<string | null>(null);
   
+  // Get store actions
+  const addPetToStore = usePetStore((state) => state.addPet);
+  const updatePetInStore = usePetStore((state) => state.updatePet);
+
   const openAddPetModal = () => setIsAddPetModalOpen(true);
   const closeAddPetModal = () => setIsAddPetModalOpen(false);
   
@@ -65,51 +72,26 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     setEditingPetData(null);
   };
   
-  const handleAddPet = async (formData: FormData) => {
-    console.log("FormData received by handleAddPet in ModalContext:");
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
-
-    try {
-      const response = await api.post('/api/v1/me/pets', formData, { 
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-      });
-
-      const createdPet: Pet = response.data;
-      console.log('>>> Pet created successfully (API Response):', createdPet);
-
-      if (addPetToStore) {
-        addPetToStore(createdPet);
-      }
-      toast.success("Pet added successfully!");
-      closeAddPetModal();
-
-    } catch (error: any) {
-      const errMsg = error.response?.data?.error || error.message || 'Network Error';
-      console.error('Failed to add pet:', error.response || error);
-      toast.error(`Failed to add pet: ${errMsg}`);
-    }
+  const openUploadPhotoModal = (petId: string) => {
+    setUploadingPetId(petId);
+    setIsUploadPhotoModalOpen(true);
   };
   
-  const handleUpdatePet = async (formData: FormData) => {
-    if (!editingPetData || !editingPetData.id) {
-      console.error("Cannot update pet: No pet data available for editing.");
-      toast.error("An error occurred. Please try again.");
-      return;
+  const closeUploadPhotoModal = () => {
+    setIsUploadPhotoModalOpen(false);
+    setUploadingPetId(null);
+  };
+  
+  // Define the success handler for PetProfileForm
+  const handlePetFormSuccess = (pet: Pet) => {
+    if (isAddPetModalOpen) {
+      addPetToStore(pet); // Add new pet to store
+      console.log('New pet added to store:', pet);
+    } else if (isEditPetModalOpen && editingPetData) {
+      updatePetInStore(pet.id, pet); // Pass ID and pet data
+      console.log('Pet updated in store:', pet);
     }
-    const petId = editingPetData.id;
-    try {
-      await updatePetInStore(petId, formData);
-      toast.success("Pet profile updated successfully!");
-      closeEditPetModal();
-    } catch (error: any) {
-      const errMsg = error.response?.data?.error || error.message || 'Network Error';
-      console.error('Failed to update pet:', error.response || error);
-      toast.error(`Failed to update pet: ${errMsg}`);
-    }
+    // Note: Modal closing is handled by PetProfileForm's onCancel, called after onSuccess
   };
   
   return (
@@ -122,6 +104,10 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
         editingPetData,
         openEditPetModal,
         closeEditPetModal,
+        isUploadPhotoModalOpen,
+        uploadingPetId,
+        openUploadPhotoModal,
+        closeUploadPhotoModal,
       }}
     >
       {children}
@@ -129,8 +115,9 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
       {isAddPetModalOpen && (
         <PetProfileForm 
           mode="create"
-          onSubmit={handleAddPet}
           onCancel={closeAddPetModal}
+          onSubmit={() => Promise.resolve()}
+          onSuccess={handlePetFormSuccess}
         />
       )}
       
@@ -138,15 +125,22 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
         <PetProfileForm 
           mode="edit"
           pet={editingPetData}
-          onSubmit={handleUpdatePet}
           onCancel={closeEditPetModal}
+          onSubmit={() => Promise.resolve()}
+          onSuccess={handlePetFormSuccess}
+        />
+      )}
+      
+      {isUploadPhotoModalOpen && uploadingPetId && (
+        <PetPhotosForm
+          petId={uploadingPetId}
+          onCancel={closeUploadPhotoModal}
         />
       )}
     </ModalContext.Provider>
   );
 };
 
-// Custom hook for using the modal context
 export const useModal = () => {
   const context = useContext(ModalContext);
   if (context === undefined) {

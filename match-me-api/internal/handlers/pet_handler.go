@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"errors"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/HaoZhangSid/match-me-api/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 )
 
 // --- Helper functions for form value conversion ---
@@ -64,53 +62,48 @@ func NewPetHandler(petService service.PetService) *PetHandler {
 	}
 }
 
-// CreatePet handles the request to add a new pet (non-photo fields)
+// @Summary Create a new pet profile
+// @Description Adds a new pet profile for the logged-in user.
+// @Tags Pets
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "Bearer Token"
+// @Param pet body models.PetCreateRequest true "Pet object that needs to be added"
+// @Success 201 {object} models.Pet
+// @Failure 400 {object} map[string]string "Invalid input"
+// @Failure 401 {object} map[string]string "Unauthorized - User ID not found or token invalid"
+// @Failure 500 {object} map[string]string "Internal Server Error"
+// @Router /api/v1/me/pets [post]
 func (h *PetHandler) CreatePet(c *gin.Context) {
-	// Note: No need for ParseMultipartForm if no files are uploaded here
 	var pet models.Pet
-	pet.Name = c.PostForm("name")
-	pet.Type = c.PostForm("type")
-	pet.Breed = stringToPtr(c.PostForm("breed"))
-	// Removed Age
-	pet.Weight = stringToFloat64Ptr(c.PostForm("weight"))
-	pet.Gender = stringToPtr(c.PostForm("gender"))
-	pet.ActivityLevel = stringToPtr(c.PostForm("activityLevel"))
-	pet.IsNeutered = stringToBoolPtr(c.PostForm("isNeutered"))
-	pet.IsMicrochipped = stringToBoolPtr(c.PostForm("isMicrochipped"))
-	pet.IsVaccinated = stringToBoolPtr(c.PostForm("isVaccinated"))
-	pet.Bio = stringToPtr(c.PostForm("bio"))
+	if err := c.ShouldBindJSON(&pet); err != nil {
+		log.Printf("Error binding JSON for creating pet: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input format", "details": err.Error()})
+		return
+	}
 
-	// Birthday parsing
-	if birthdayStr := c.PostForm("birthday"); birthdayStr != "" {
-		layout := "2006-01-02"
-		parsedTime, err := time.Parse(layout, birthdayStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid birthday format. Use YYYY-MM-DD."})
+	// Input validation - REMOVED pet.Validate() call as it doesn't exist
+	// Validation should be handled in the service layer or by checking specific fields if needed here.
+	/*
+		if err := pet.Validate(); err != nil {
+			log.Printf("Validation error for creating pet: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed", "details": err.Error()})
 			return
 		}
-		pet.Birthday = &parsedTime
-	}
+	*/
 
-	// Array Fields
-	if personalityStr := c.PostForm("personality"); personalityStr != "" {
-		pet.Personality = pq.StringArray(strings.Split(personalityStr, ","))
-	}
-	if activitiesStr := c.PostForm("favoriteActivities"); activitiesStr != "" {
-		pet.FavoriteActivities = pq.StringArray(strings.Split(activitiesStr, ","))
-	}
-	if playStyleStr := c.PostForm("playStyle"); playStyleStr != "" {
-		pet.PlayStyle = pq.StringArray(strings.Split(playStyleStr, ","))
-	}
+	// User ID is automatically retrieved from the context in the service layer
+	// No need to extract or set it here anymore.
 
-	// Removed Avatar and Photos handling
-
-	createdPet, err := h.petService.AddPet(c.Request.Context(), &pet)
+	// Call the service layer, passing the request context which contains the userID
+	createdPet, err := h.petService.AddPet(c.Request.Context(), &pet) // Pass request context
 	if err != nil {
-		if errors.Is(err, service.ErrValidation) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("Error calling pet service AddPet: %v", err)
+		// Check for specific error types if needed, e.g., context error vs. db error
+		if strings.Contains(err.Error(), "failed to get user ID") { // Check if it's the context error from service
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID missing from context"})
 		} else {
-			log.Printf("Error creating pet: %v\n", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create pet profile"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create pet", "details": err.Error()})
 		}
 		return
 	}
@@ -161,84 +154,15 @@ func (h *PetHandler) UpdatePet(c *gin.Context) {
 		return
 	}
 
-	// No need for ParseMultipartForm
-	var payload models.PetUpdatePayload
+	var payload models.PetUpdatePayload // Expecting JSON payload for updates
 
-	// Bind simple fields
-	if name := c.PostForm("name"); name != "" {
-		payload.Name = &name
-	}
-	if petType := c.PostForm("type"); petType != "" {
-		payload.Type = &petType
-	}
-	if breed := c.PostForm("breed"); breed != "" {
-		payload.Breed = stringToPtr(breed)
-	}
-	// Removed Age
-	if weight := c.PostForm("weight"); weight != "" {
-		payload.Weight = stringToFloat64Ptr(weight)
-	}
-	if gender := c.PostForm("gender"); gender != "" {
-		payload.Gender = stringToPtr(gender)
-	}
-	if energyLevel := c.PostForm("activityLevel"); energyLevel != "" {
-		payload.ActivityLevel = stringToPtr(energyLevel)
-	}
-	if isNeutered := c.PostForm("isNeutered"); isNeutered != "" {
-		payload.IsNeutered = stringToBoolPtr(isNeutered)
-	}
-	if isMicrochipped := c.PostForm("isMicrochipped"); isMicrochipped != "" {
-		payload.IsMicrochipped = stringToBoolPtr(isMicrochipped)
-	}
-	if isVaccinated := c.PostForm("isVaccinated"); isVaccinated != "" {
-		payload.IsVaccinated = stringToBoolPtr(isVaccinated)
-	}
-	if bio := c.PostForm("bio"); bio != "" {
-		payload.Bio = stringToPtr(bio)
+	// Bind JSON data from the request body
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+		return
 	}
 
-	// Birthday parsing
-	if birthdayStr := c.PostForm("birthday"); birthdayStr != "" {
-		layout := "2006-01-02"
-		parsedTime, err := time.Parse(layout, birthdayStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid birthday format. Use YYYY-MM-DD."})
-			return
-		}
-		payload.Birthday = &parsedTime
-	} else if _, exists := c.Request.PostForm["birthday"]; exists {
-		// Allow clearing birthday by sending empty string
-		var nilTime *time.Time
-		payload.Birthday = nilTime
-	}
-
-	// Array Fields (Handle clearing if empty string provided)
-	if personalityStr := c.PostForm("personality"); personalityStr != "" {
-		arr := pq.StringArray(strings.Split(personalityStr, ","))
-		payload.Personality = &arr
-	} else if _, exists := c.Request.PostForm["personality"]; exists {
-		arr := pq.StringArray{}
-		payload.Personality = &arr
-	}
-
-	if activitiesStr := c.PostForm("favoriteActivities"); activitiesStr != "" {
-		arr := pq.StringArray(strings.Split(activitiesStr, ","))
-		payload.FavoriteActivities = &arr
-	} else if _, exists := c.Request.PostForm["favoriteActivities"]; exists {
-		arr := pq.StringArray{}
-		payload.FavoriteActivities = &arr
-	}
-
-	if playStyleStr := c.PostForm("playStyle"); playStyleStr != "" {
-		arr := pq.StringArray(strings.Split(playStyleStr, ","))
-		payload.PlayStyle = &arr
-	} else if _, exists := c.Request.PostForm["playStyle"]; exists {
-		arr := pq.StringArray{}
-		payload.PlayStyle = &arr
-	}
-
-	// Removed Avatar and Photos handling
-
+	// Call the service layer
 	updatedPet, err := h.petService.UpdatePetInfo(c.Request.Context(), petID, &payload)
 	if err != nil {
 		if errors.Is(err, service.ErrNotFound) {
@@ -254,7 +178,7 @@ func (h *PetHandler) UpdatePet(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedPet) // Includes populated photo URLs
+	c.JSON(http.StatusOK, updatedPet)
 }
 
 // DeletePet handles the request to delete a specific pet

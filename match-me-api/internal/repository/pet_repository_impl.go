@@ -20,19 +20,50 @@ func NewPostgresPetRepository(db *gorm.DB) PetRepository {
 }
 
 // GetPetByID retrieves a single pet by its ID.
-// It returns the pet record or an error if not found or other issues occur.
+// It now manually loads associated photos and sets the AvatarURL.
 func (r *postgresPetRepository) GetPetByID(ctx context.Context, petID uuid.UUID) (*models.Pet, error) {
 	var pet models.Pet
-	// We use .WithContext to ensure the query respects context cancellation/timeouts.
-	// Note: We are NOT preloading Photos here. Photo loading should happen in the service layer
-	// to keep repository focused on direct data access for the Pet model itself.
-	result := r.db.WithContext(ctx).Where("id = ?", petID).First(&pet)
+
+	// 1. Fetch the pet first
+	result := r.db.WithContext(ctx).
+		Where("id = ?", petID).
+		First(&pet)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("pet with ID %s not found: %w", petID, result.Error) // Consider wrapping gorm.ErrRecordNotFound if specific handling is needed upstream
+			return nil, fmt.Errorf("pet with ID %s not found: %w", petID, result.Error)
 		}
 		return nil, fmt.Errorf("error fetching pet %s: %w", petID, result.Error)
+	}
+
+	// 2. Fetch associated photos
+	var photos []models.Photo
+	photoResult := r.db.WithContext(ctx).
+		Where("owner_type = ? AND owner_id = ?", "pet", pet.ID).
+		Order("created_at ASC").
+		Find(&photos)
+
+	if photoResult.Error != nil {
+		// Log or handle error - returning pet without photos for now, maybe log warning
+		fmt.Printf("Warning: could not fetch photos for pet %s: %v\n", pet.ID, photoResult.Error)
+		pet.Photos = []models.Photo{} // Ensure Photos is empty slice
+		pet.AvatarURL = nil
+	} else {
+		pet.Photos = photos
+		// 3. Set AvatarURL based on loaded photos
+		var primaryPhotoURL *string
+		for j := range pet.Photos {
+			if pet.Photos[j].IsPrimary {
+				urlCopy := pet.Photos[j].URL
+				primaryPhotoURL = &urlCopy
+				break
+			}
+		}
+		if primaryPhotoURL == nil && len(pet.Photos) > 0 {
+			urlCopy := pet.Photos[0].URL
+			primaryPhotoURL = &urlCopy
+		}
+		pet.AvatarURL = primaryPhotoURL
 	}
 
 	return &pet, nil
@@ -65,20 +96,76 @@ func (r *postgresPetRepository) CreatePet(ctx context.Context, pet *models.Pet) 
 }
 
 // GetPetsByUserID retrieves all pets belonging to a specific user
+// It now manually loads associated photos.
 func (r *postgresPetRepository) GetPetsByUserID(ctx context.Context, userID uuid.UUID) ([]models.Pet, error) {
 	var pets []models.Pet
 
-	// Query the database for pets matching the userID
-	// Use .WithContext for cancellation support
-	// Order by creation time or name, for example
-	result := r.db.WithContext(ctx).Where("user_id = ?", userID).Order("created_at ASC").Find(&pets)
+	// 1. Fetch pets without preloading photos initially
+	result := r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Order("created_at ASC").
+		Find(&pets)
 
 	if result.Error != nil {
-		// Return an empty slice and the error if the query fails
 		return nil, fmt.Errorf("error fetching pets for user %s: %w", userID, result.Error)
 	}
 
-	// Return the slice of pets (can be empty if user has no pets)
+	// If no pets found, return early
+	if len(pets) == 0 {
+		return pets, nil
+	}
+
+	// 2. Collect pet IDs
+	petIDs := make([]uuid.UUID, len(pets))
+	for i, p := range pets {
+		petIDs[i] = p.ID
+	}
+
+	// 3. Fetch all relevant photos in a single query
+	var photos []models.Photo
+	photoResult := r.db.WithContext(ctx).
+		Where("owner_type = ? AND owner_id IN ?", "pet", petIDs).
+		Order("created_at ASC"). // Order photos if needed
+		Find(&photos)
+
+	if photoResult.Error != nil {
+		// Log error but potentially return pets without photos? Or return error?
+		// Let's return the error for now, as failing to load photos might be critical.
+		return nil, fmt.Errorf("error fetching photos for pets: %w", photoResult.Error)
+	}
+
+	// 4. Group photos by OwnerID (pet ID)
+	photosByPetID := make(map[uuid.UUID][]models.Photo)
+	for _, photo := range photos {
+		photosByPetID[photo.OwnerID] = append(photosByPetID[photo.OwnerID], photo)
+	}
+
+	// 5. Assign photos and set AvatarURL for each pet
+	for i := range pets {
+		pet := &pets[i] // Get pointer to modify
+		if petPhotos, ok := photosByPetID[pet.ID]; ok {
+			pet.Photos = petPhotos
+			// Set AvatarURL based on assigned photos
+			var primaryPhotoURL *string
+			for j := range pet.Photos {
+				if pet.Photos[j].IsPrimary {
+					urlCopy := pet.Photos[j].URL
+					primaryPhotoURL = &urlCopy
+					break
+				}
+			}
+			if primaryPhotoURL == nil && len(pet.Photos) > 0 {
+				urlCopy := pet.Photos[0].URL
+				primaryPhotoURL = &urlCopy
+			}
+			pet.AvatarURL = primaryPhotoURL
+		} else {
+			// Ensure Photos is an empty slice, not nil, if no photos found
+			pet.Photos = []models.Photo{}
+			pet.AvatarURL = nil
+		}
+	}
+
 	return pets, nil
 }
 

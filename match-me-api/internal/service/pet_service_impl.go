@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"sort" // Needed for sorting photos by order
+
+	// "sort" // No longer needed here as repo handles photo loading/ordering
 
 	"github.com/HaoZhangSid/match-me-api/internal/models"
 	"github.com/HaoZhangSid/match-me-api/internal/repository"
@@ -17,43 +17,39 @@ import (
 // petService implements the PetService interface
 type petService struct {
 	petRepo   repository.PetRepository
-	photoRepo repository.PhotoRepository // Added PhotoRepository dependency
+	photoRepo repository.PhotoRepository // Still needed for other photo operations potentially
 }
 
 // NewPetService creates a new instance of PetService
 func NewPetService(petRepo repository.PetRepository, photoRepo repository.PhotoRepository) PetService {
 	return &petService{
 		petRepo:   petRepo,
-		photoRepo: photoRepo, // Store PhotoRepository
+		photoRepo: photoRepo,
 	}
 }
 
-// GetPetByID retrieves a single pet and populates its photo URLs.
+// GetPetByID retrieves a single pet. Repository now handles photo preloading.
 func (s *petService) GetPetByID(ctx context.Context, petID uuid.UUID) (*models.Pet, error) {
-	// Retrieve the core pet data from the repository
+	// Retrieve the pet data (including photos) from the repository
 	pet, err := s.petRepo.GetPetByID(ctx, petID)
 	if err != nil {
-		// Check if the error is 'record not found' and wrap it for standardized error handling
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// Use the predefined ErrNotFound
 			return nil, fmt.Errorf("%w: pet with ID %s not found", ErrNotFound, petID)
 		}
-		// For other database errors, return a generic error message
 		return nil, fmt.Errorf("failed to retrieve pet %s: %w", petID, err)
 	}
 
-	// Populate the photo URLs for the retrieved pet
-	err = s.populatePetPhotoURLs(ctx, pet)
-	if err != nil {
-		// Log the warning but still return the pet data (photos might be partially populated or missing)
-		log.Printf("Warning: Failed to fully populate photo URLs for pet %s: %v", petID, err)
-		// Do not return the error here, allow the response to proceed with potentially incomplete photo data
-	}
+	// No longer need to call populatePetPhotoURLs here
+	// err = s.populatePetPhotoURLs(ctx, pet)
+	// if err != nil {
+	// 	log.Printf("Warning: Failed to fully populate photo URLs for pet %s: %v", petID, err)
+	// }
 
 	return pet, nil
 }
 
-// populatePetPhotoURLs fetches photos for a given pet and sets the AvatarURL and PhotoURLs fields.
+// populatePetPhotoURLs function is removed as Repository now handles this.
+/*
 func (s *petService) populatePetPhotoURLs(ctx context.Context, pet *models.Pet) error {
 	if pet == nil {
 		return errors.New("cannot populate photos for nil pet")
@@ -61,41 +57,36 @@ func (s *petService) populatePetPhotoURLs(ctx context.Context, pet *models.Pet) 
 
 	photos, err := s.photoRepo.GetPhotosByOwner(ctx, "pet", pet.ID)
 	if err != nil {
-		// If no photos found, it's not necessarily an error for population, just means no photos.
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			pet.AvatarURL = nil
-			pet.PhotoURLs = []string{}
+			// pet.PhotoURLs = []string{} // Field removed
 			return nil
 		}
-		// For other errors, return the error
 		return fmt.Errorf("failed to get photos for pet %s: %w", pet.ID, err)
 	}
 
-	// Sort photos by their Order field
 	sort.Slice(photos, func(i, j int) bool {
 		return photos[i].Order < photos[j].Order
 	})
 
 	var avatarURL *string
-	otherPhotoURLs := []string{}
+	// otherPhotoURLs := []string{} // Field removed
 
 	for _, p := range photos {
 		if p.IsPrimary {
-			// Make a copy of the URL string to avoid issues with pointer reuse if we used &p.URL directly
 			primaryURL := p.URL
 			avatarURL = &primaryURL
-		} else {
-			otherPhotoURLs = append(otherPhotoURLs, p.URL)
-		}
+		} // else {
+		// 	otherPhotoURLs = append(otherPhotoURLs, p.URL) // Field removed
+		// }
 	}
 
 	pet.AvatarURL = avatarURL
-	pet.PhotoURLs = otherPhotoURLs
+	// pet.PhotoURLs = otherPhotoURLs // Field removed
 
 	return nil
 }
-
-// --- Placeholder Methods ---
+*/
 
 // AddPet adds a new pet for the currently logged-in user
 func (s *petService) AddPet(ctx context.Context, pet *models.Pet) (*models.Pet, error) {
@@ -109,35 +100,39 @@ func (s *petService) AddPet(ctx context.Context, pet *models.Pet) (*models.Pet, 
 		return nil, fmt.Errorf("%w: pet name and type are required", ErrValidation)
 	}
 
-	pet.AvatarURL = nil
-	pet.PhotoURLs = nil
+	// No need to set AvatarURL or PhotoURLs here, they are handled by repository on fetch
+	// pet.AvatarURL = nil
+	// pet.PhotoURLs = nil
 
 	err = s.petRepo.CreatePet(ctx, pet)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save pet to database: %w", err)
 	}
 
+	// Return the created pet (photos will be empty as none are associated yet)
 	return pet, nil
 }
 
-// ListUserPets retrieves all pets for the currently logged-in user
+// ListUserPets retrieves all pets for the currently logged-in user. Repository handles photo preloading.
 func (s *petService) ListUserPets(ctx context.Context) ([]models.Pet, error) {
 	userID, err := utils.GetUserIDFromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user ID for listing pets: %w", err)
 	}
 
+	// Get pets WITH photos preloaded from repository
 	pets, err := s.petRepo.GetPetsByUserID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve pets from database: %w", err)
 	}
 
-	for i := range pets {
-		err = s.populatePetPhotoURLs(ctx, &pets[i])
-		if err != nil {
-			log.Printf("Warning: Failed to populate photo URLs for pet %s: %v", pets[i].ID, err)
-		}
-	}
+	// No longer need the loop to populate photos here
+	// for i := range pets {
+	// 	err = s.populatePetPhotoURLs(ctx, &pets[i])
+	// 	if err != nil {
+	// 		log.Printf("Warning: Failed to populate photo URLs for pet %s: %v", pets[i].ID, err)
+	// 	}
+	// }
 
 	return pets, nil
 }
@@ -149,7 +144,8 @@ func (s *petService) UpdatePetInfo(ctx context.Context, petID uuid.UUID, updateD
 		return nil, fmt.Errorf("failed to get user ID for updating pet: %w", err)
 	}
 
-	existingPet, err := s.petRepo.GetPetByID(ctx, petID)
+	// Fetch the existing pet (without photos for now, as repo update doesn't preload)
+	existingPet, err := s.petRepo.GetPetByID(ctx, petID) // GetPetByID now preloads photos
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("%w: pet with ID %s not found", ErrNotFound, petID)
@@ -161,9 +157,11 @@ func (s *petService) UpdatePetInfo(ctx context.Context, petID uuid.UUID, updateD
 		return nil, ErrUnauthorized
 	}
 
+	// --- Apply updates ---
 	if updateData.Name != nil {
 		existingPet.Name = *updateData.Name
 	}
+	// ... (rest of the field updates remain the same) ...
 	if updateData.Type != nil {
 		existingPet.Type = *updateData.Type
 	}
@@ -208,15 +206,19 @@ func (s *petService) UpdatePetInfo(ctx context.Context, petID uuid.UUID, updateD
 		return nil, fmt.Errorf("%w: pet name and type cannot be empty after update", ErrValidation)
 	}
 
+	// Save the updated pet (repo UpdatePet doesn't preload photos)
 	err = s.petRepo.UpdatePet(ctx, existingPet)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save updated pet to database: %w", err)
 	}
 
-	err = s.populatePetPhotoURLs(ctx, existingPet)
-	if err != nil {
-		log.Printf("Warning: Failed to populate photo URLs for pet %s after update: %v", petID, err)
-	}
+	// Return the pet object fetched *before* the update, but now including photos because GetPetByID preloads them.
+	// The photo data itself isn't modified by this update operation.
+	// No need to call populatePetPhotoURLs here anymore.
+	// err = s.populatePetPhotoURLs(ctx, existingPet)
+	// if err != nil {
+	// 	log.Printf("Warning: Failed to populate photo URLs for pet %s after update: %v", petID, err)
+	// }
 
 	return existingPet, nil
 }
@@ -228,7 +230,7 @@ func (s *petService) DeletePet(ctx context.Context, petID uuid.UUID) error {
 		return fmt.Errorf("failed to get user ID for deleting pet: %w", err)
 	}
 
-	existingPet, err := s.petRepo.GetPetByID(ctx, petID)
+	existingPet, err := s.petRepo.GetPetByID(ctx, petID) // This now preloads photos
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("%w: pet with ID %s not found", ErrNotFound, petID)
@@ -240,7 +242,8 @@ func (s *petService) DeletePet(ctx context.Context, petID uuid.UUID) error {
 		return ErrUnauthorized
 	}
 
-	// TODO: Delete associated photos
+	// TODO: Delete associated photos from storage and database before deleting the pet
+	// This requires iterating through existingPet.Photos and calling photoRepo/fileStorage methods
 
 	err = s.petRepo.DeletePet(ctx, petID)
 	if err != nil {
