@@ -238,6 +238,38 @@ This document outlines the RESTful API endpoints for the PetPals backend.
 - **Response (401 Unauthorized):** User does not own this pet.
 - **Response (404 Not Found):** Pet not found.
 
+### `GET /me/pets/{petId}/recommendations`
+- **Description:** Retrieves a list of recommended pets (potential playmates) for a specific pet owned by the current user. Recommendations are based on owner proximity, pet type, and activity level.
+- **Path Parameters:**
+    - `petId` (UUID): The ID of the user's pet for which to get recommendations.
+- **Query Parameters (Optional - for future refinement):**
+    - `limit` (int, default: 10): Maximum number of recommendations to return.
+- **Response (200 OK):** Array of recommended Pet objects (structure similar to `GET /me/pets`, potentially a simplified version).
+  ```json
+  [
+    {
+      "id": "recommended-pet-uuid-1",
+      "userId": "other-user-uuid",
+      "name": "Luna",
+      "type": "dog",
+      "breed": "Labrador",
+      "gender": "female",
+      "activityLevel": "high",
+      "avatarUrl": "/uploads/pet/rec-pet-uuid-1/avatar.jpg",
+      "owner": { // Include basic owner info for context
+        "id": "other-user-uuid",
+        "name": "Jane Smith",
+        "location": "Cityville" // Crucial for verifying proximity logic
+      }
+      // Include other relevant fields? Bio? Personality?
+    },
+    // ... up to 'limit' pets
+  ]
+  ```
+- **Response (401 Unauthorized):** User does not own the pet specified by `petId`.
+- **Response (404 Not Found):** Pet specified by `petId` not found.
+- **Notes:** Excludes pets owned by the current user and potentially pets already connected/interacted with (TBD).
+
 ---
 
 ## Photos
@@ -309,6 +341,65 @@ This document outlines the RESTful API endpoints for the PetPals backend.
     - `petId` (UUID): The ID of the pet whose photos to list.
 - **Response (200 OK):** Array of Photo objects.
 - **Response (404 Not Found):** Pet not found.
+
+---
+
+## Search / Discovery
+
+### `GET /pets/search`
+- **Description:** Provides a flexible way to search and filter through all publicly available pets, intended for use by the Discover page. Supports various filter criteria and pagination.
+- **Authentication:** Optional. Authenticated users might see slightly different results in the future (e.g., indicating connection status), but basic search is public.
+- **Query Parameters (Examples - Combine as needed):**
+    - **Location/Distance:**
+        - `latitude` (float): User's current latitude for distance calculation.
+        - `longitude` (float): User's current longitude for distance calculation.
+        - `radius_km` (float): Maximum distance in kilometers from the provided coordinates.
+        - `location` (string): Simple location string search (less precise).
+    - **Pet Attributes:**
+        - `type` (string): e.g., "dog", "cat"
+        - `breed` (string): e.g., "Labrador"
+        - `activityLevel` (string): e.g., "high", "medium", "low"
+        - `gender` (string): e.g., "male", "female"
+        - `minAgeMonths` (int): Minimum age in months.
+        - `maxAgeMonths` (int): Maximum age in months.
+    - **Sorting:**
+        - `sortBy` (string): Field to sort by (e.g., `distance`, `name`, `createdAt`). Default might be relevance or creation date.
+        - `sortOrder` (string): `asc` or `desc`. Default depends on `sortBy`.
+    - **Pagination:**
+        - `page` (int, default: 1): Page number for pagination.
+        - `limit` (int, default: 20): Number of results per page.
+- **Response (200 OK):** Paginated list of Pet objects matching the criteria. The structure of each pet object should be similar to the public view (`GET /users/{userId}/pets`), possibly including basic owner info.
+  ```json
+  {
+    "data": [
+      {
+        "id": "searched-pet-uuid-1",
+        "userId": "owner-uuid-1",
+        "name": "Max",
+        "type": "dog",
+        "breed": "Beagle",
+        "gender": "male",
+        "activityLevel": "medium",
+        "avatarUrl": "/uploads/pet/searched-pet-uuid-1/avatar.jpg",
+        "owner": { // Basic owner info might be useful
+          "id": "owner-uuid-1",
+          "name": "Alex",
+          "location": "Suburbia" // Or coordinates/distance if searched by location
+        }
+        // ... other relevant public pet fields
+      },
+      // ... more pets
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 5,
+      "totalResults": 95,
+      "limit": 20
+    }
+  }
+  ```
+- **Response (400 Bad Request):** Invalid query parameter format (e.g., non-numeric radius, invalid sort field).
+- **Notes:** Requires efficient backend implementation, likely leveraging database indexing (including spatial indexing if PostGIS is used for distance filtering).
 
 ---
 
