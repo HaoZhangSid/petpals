@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-	"time" // Needed for age calculation
+	"log"     // Add math import for Abs
+	"sort"    // Add sort import
+	"strings" // Add strings import for ToLower
+	"time"    // Needed for age calculation
 
 	// Need UserIDKey
 	"github.com/HaoZhangSid/match-me-api/internal/models"
@@ -238,6 +240,36 @@ func (s *petService) DeletePet(ctx context.Context, petID uuid.UUID) error {
 	return nil
 }
 
+// --- Helper Functions ---
+
+// getActivityScore converts activity level string to a numerical score.
+// Lower score means lower activity level. Handles nil and unknown values.
+func getActivityScore(level *string) int {
+	if level == nil {
+		return 99 // Treat nil as very dissimilar
+	}
+	switch strings.ToLower(*level) {
+	case "low":
+		return 1
+	case "medium":
+		return 2
+	case "high":
+		return 3
+	default:
+		return 99 // Unknown levels are treated as dissimilar
+	}
+}
+
+// abs returns the absolute value of x.
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+// --- Service Implementation ---
+
 // GetPetRecommendations finds suitable pet playmates near the target pet's owner.
 func (s *petService) GetPetRecommendations(ctx context.Context, targetPetID uuid.UUID, requestingUserID uuid.UUID) ([]models.PetRecommendation, error) {
 	log.Printf("Service: GetPetRecommendations called for pet %s by user %s", targetPetID, requestingUserID)
@@ -256,6 +288,10 @@ func (s *petService) GetPetRecommendations(ctx context.Context, targetPetID uuid
 			requestingUserID, targetPetID, targetPet.UserID)
 		return nil, fmt.Errorf("%w: cannot get recommendations for a pet you do not own", ErrUnauthorized)
 	}
+
+	// Extract target pet details for filtering and sorting
+	targetPetType := targetPet.Type
+	targetActivityLevel := targetPet.ActivityLevel
 
 	// 2. Get the Owner's data
 	owner, err := s.userRepo.GetUserByID(ctx, targetPet.UserID)
@@ -287,24 +323,44 @@ func (s *petService) GetPetRecommendations(ctx context.Context, targetPetID uuid
 	}
 	radiusMeters := radiusKm * 1000.0
 	centerPointWKT := *owner.Coordinates
-	limit := 50 // Default recommendation limit
+	initialFetchLimit := 50 // Fetch more initially for better sorting pool
+	finalLimit := 10        // Final number of recommendations
 
-	log.Printf("Service: Finding nearby pets for owner %s within %.2f meters of %s (excluding pet %s)",
-		owner.ID, radiusMeters, centerPointWKT, targetPetID)
+	log.Printf("Service: Finding nearby pets (type: %s) for owner %s within %.2f meters of %s (excluding pet %s)",
+		targetPetType, owner.ID, radiusMeters, centerPointWKT, targetPetID)
 
-	// 4. Call Repository to find nearby pets (including distance)
-	recommendedPetInfos, err := s.petRepo.FindNearbyPets(ctx, centerPointWKT, radiusMeters, targetPetID, owner.ID, limit)
+	// 4. Call Repository to find nearby pets (filtered by type, sorted by distance)
+	recommendedPetInfos, err := s.petRepo.FindNearbyPets(ctx, centerPointWKT, radiusMeters, targetPetID, owner.ID, targetPetType, initialFetchLimit)
 	if err != nil {
 		log.Printf("Error calling FindNearbyPets repository method: %v", err)
 		return nil, fmt.Errorf("failed to query nearby pets: %w", err)
 	}
 
 	if len(recommendedPetInfos) == 0 {
-		log.Printf("Service: No nearby pets found for owner %s", owner.ID)
+		log.Printf("Service: No nearby pets of type %s found for owner %s", targetPetType, owner.ID)
 		return []models.PetRecommendation{}, nil
 	}
 
-	// 5. Prepare the final DTO list, populating owner and photo details
+	log.Printf("Service: Found %d candidates. Sorting by activity level similarity...", len(recommendedPetInfos))
+
+	// 5. Sort by Activity Level Similarity (Stable sort to preserve distance order)
+	targetScore := getActivityScore(targetActivityLevel)
+	sort.SliceStable(recommendedPetInfos, func(i, j int) bool {
+		scoreI := getActivityScore(recommendedPetInfos[i].Pet.ActivityLevel)
+		scoreJ := getActivityScore(recommendedPetInfos[j].Pet.ActivityLevel)
+		diffI := abs(scoreI - targetScore)
+		diffJ := abs(scoreJ - targetScore)
+		return diffI < diffJ // Smaller difference is better
+	})
+
+	// 6. Limit to final number of recommendations
+	if len(recommendedPetInfos) > finalLimit {
+		recommendedPetInfos = recommendedPetInfos[:finalLimit]
+	}
+
+	log.Printf("Service: Top %d candidates selected after sorting.", len(recommendedPetInfos))
+
+	// 7. Prepare the final DTO list, populating owner and photo details
 	recommendations := make([]models.PetRecommendation, 0, len(recommendedPetInfos))
 	ownerInfoCache := make(map[uuid.UUID]*models.User)  // Cache owner info
 	ownerAvatarCache := make(map[uuid.UUID]*string)     // Cache owner avatar URLs

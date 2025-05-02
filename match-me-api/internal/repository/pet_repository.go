@@ -25,7 +25,8 @@ type PetRepository interface {
 	DeletePet(ctx context.Context, petID uuid.UUID) error
 
 	// FindNearbyPets finds pets whose owners are within a given radius (in meters)
-	// from the provided center point WKT, excluding specific pet and owner IDs.
-	// It returns pet details along with the distance.
-	FindNearbyPets(ctx context.Context, centerPointWKT string, radiusMeters float64, excludePetID uuid.UUID, excludeOwnerID uuid.UUID, limit int) ([]models.RecommendedPetInfo, error)
+	// from the provided center point WKT, excluding specific pet and owner IDs,
+	// and matching the target pet type.
+	// It returns pet details along with the distance, sorted by distance.
+	FindNearbyPets(ctx context.Context, centerPointWKT string, radiusMeters float64, excludePetID uuid.UUID, excludeOwnerID uuid.UUID, targetPetType string, limit int) ([]models.RecommendedPetInfo, error)
 }

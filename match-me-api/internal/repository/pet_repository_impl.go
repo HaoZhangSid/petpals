@@ -224,7 +224,7 @@ func (r *postgresPetRepository) DeletePet(ctx context.Context, petID uuid.UUID) 
 // FindNearbyPets finds pets whose owners are within a given radius (in meters)
 // from the provided center point WKT, excluding specific pet and owner IDs.
 // It returns pet details along with the calculated distance.
-func (r *postgresPetRepository) FindNearbyPets(ctx context.Context, centerPointWKT string, radiusMeters float64, excludePetID uuid.UUID, excludeOwnerID uuid.UUID, limit int) ([]models.RecommendedPetInfo, error) {
+func (r *postgresPetRepository) FindNearbyPets(ctx context.Context, centerPointWKT string, radiusMeters float64, excludePetID uuid.UUID, excludeOwnerID uuid.UUID, targetPetType string, limit int) ([]models.RecommendedPetInfo, error) {
 	var results []models.RecommendedPetInfo
 
 	if centerPointWKT == "" {
@@ -245,6 +245,7 @@ func (r *postgresPetRepository) FindNearbyPets(ctx context.Context, centerPointW
           AND p.deleted_at IS NULL
           AND p.id <> ?
           AND p.user_id <> ?
+          AND p.type = ? 
           AND ST_DWithin(u.coordinates, ?::geography, ?)
         ORDER BY distance_meters ASC
         LIMIT ?
@@ -256,7 +257,8 @@ func (r *postgresPetRepository) FindNearbyPets(ctx context.Context, centerPointW
 		centerPointWKT,
 		excludePetID,
 		excludeOwnerID,
-		centerPointWKT, // Used again for ST_DWithin
+		targetPetType,
+		centerPointWKT,
 		radiusMeters,
 		limit,
 	).Scan(&results)

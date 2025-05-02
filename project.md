@@ -43,13 +43,15 @@ Users can manage multiple pet profiles and modify any profile information at any
 
 ### Recommendations
 - Generates recommendations for a specific **pet** owned by the logged-in user, suggesting other nearby pets as potential playmates.
-- Maximum of 10 recommendations at a time (configurable default).
-- Prioritized matching based on:
-  - **Owner location proximity** (within owner's defined distance in their profile: `max_recommendation_radius_km`).
-  - Pet compatibility (e.g., similar type/size, energy level, complementary personality traits) - *Future Enhancement*
-  - Owner interests and activity preferences - *Future Enhancement*
-- Excludes the user's own pets and pets of users they might already be connected with or blocked by - *Refinement Needed*
-- API endpoint likely `GET /api/v1/pets/{petId}/recommendations`.
+- Maximum of 10 recommendations returned.
+- Filtering and Sorting logic:
+  - **Mandatory Filter:** Recommended pets **must** be of the **same type** (e.g., cat for a cat) as the target pet.
+  - **Mandatory Filter:** Recommended pets' owners **must** be within the user's defined distance radius (`max_recommendation_radius_km`).
+  - **Mandatory Filter:** Excludes the user's own pets.
+  - **Sorting Priority:**
+    1.  Geographic Distance (`distance_meters`) - Ascending (Closest first).
+    2.  Activity Level Similarity - Pets with activity levels numerically closest to the target pet's level are ranked higher (using stable sort to preserve distance order when similarity is equal).
+- API endpoint is `GET /api/v1/pets/{petId}/recommendations`.
 
 ### Connections
 - Send connection requests (e.g., initiated from recommendations or user profiles)
@@ -232,7 +234,7 @@ Defines RESTful endpoints for core resources. `/api/v1` prefix assumed.
 - `PUT /me/pets/{petId}` - Update a specific pet owned by the user.
 - `DELETE /me/pets/{petId}` - Delete a specific pet owned by the user.
 - `POST /me/pets/{petId}/photos` - Upload photo(s) for a specific pet owned by the user.
-- `GET /pets/{petId}/recommendations` - **(NEW)** Get potential playmate recommendations for a specific pet owned by the user.
+- `GET /pets/{petId}/recommendations` - **(NEW)** Get potential playmate recommendations for a specific pet owned by the user. Filters by same type, owner distance, and sorts by distance then activity level similarity (max 10 results).
 - `GET /pets/{petId}/photos` - List photos of a specific pet (public).
 
 **Other Users (Public Views):**
@@ -367,7 +369,7 @@ This checklist tracks the development progress based on the defined requirements
 **Phase 2: Matching & Connections**
 
 *   **[DONE]** Backend: Implement **Pet-Specific Recommendation** logic & `GET /pets/{petId}/recommendations` API (based on owner proximity, limit 10).
-*   **[ ] Backend:** Enhance pet recommendation filtering (pet type, activity level etc.).
+*   **[DONE]** Backend: Enhance pet recommendation filtering/sorting (mandatory same type, sort by distance then activity level similarity).
 *   **[ ] Backend:** Implement **Pet Search/Filter** logic & **`GET /pets/search`** API for the Discover page (supporting various filters like location/distance, type, breed, activity, etc., with pagination).
 *   **[DONE]** Backend: Implement Connection APIs (`POST /connections`, `GET /connections/requests`, `PUT /connections/requests/{requestId}`, `GET /connections`, `DELETE /connections/{connectionId}`).
 *   **[DONE - Basic]** Backend: Implement basic authorization logic (Profile: public view; Pet: owner modify).

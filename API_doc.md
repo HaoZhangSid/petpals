@@ -239,7 +239,7 @@ This document outlines the RESTful API endpoints for the PetPals backend.
 - **Response (404 Not Found):** Pet not found.
 
 ### `GET /pets/{petId}/recommendations`
-- **Description:** (Auth Required) Retrieves a list of recommended pets (potential playmates) for a specific pet owned by the current user. Recommendations are based on the owner's location proximity and their defined maximum recommendation radius. Excludes the user's own pets.
+- **Description:** (Auth Required) Retrieves a list of recommended pets (potential playmates) for a specific pet owned by the current user. Recommendations **must** be of the **same type** (e.g., cat for a cat) as the target pet. Results are filtered based on the owner's location proximity (within their defined `max_recommendation_radius_km`) and exclude the user's own pets. The recommendations are **sorted primarily by distance** (closest first) and **secondarily by activity level similarity** (pets with activity levels closest to the target pet's level appear first). The final list is limited to a **maximum of 10** recommendations.
 - **Path Parameters:**
     - `petId` (UUID): The ID of the user's pet for which to get recommendations.
 - **Response (200 OK):** Array of `PetRecommendation` objects.
@@ -248,7 +248,7 @@ This document outlines the RESTful API endpoints for the PetPals backend.
     {
       "id": "recommended-pet-uuid-1", // Pet ID
       "name": "Luna",
-      "type": "dog",
+      "type": "dog", // Will match the target pet's type
       "breed": "Labrador",
       "age": 3.5,
       "gender": "female",
@@ -257,7 +257,7 @@ This document outlines the RESTful API endpoints for the PetPals backend.
       "personality": ["playful", "friendly"],
       "favorite_activities": ["fetch", "walks"],
       "play_style": ["energetic"],
-      "activity_level": "high",
+      "activity_level": "high", // Sorted based on similarity to target
       "is_neutered": true,
       "is_vaccinated": true,
       "is_microchipped": false,
@@ -269,9 +269,9 @@ This document outlines the RESTful API endpoints for the PetPals backend.
       "ownerId": "other-user-uuid",
       "ownerName": "Jane Smith",
       "ownerAvatarUrl": "/uploads/user/other-user-uuid/avatar.jpg",
-      "distanceMeters": 4567.89 // Calculated distance
+      "distanceMeters": 4567.89 // Sorted primarily by this
     }
-    // ... other recommended pets ...
+    // ... up to 9 other recommended pets ...
   ]
   ```
 - **Response (401 Unauthorized):** User does not own the pet specified by `petId`, or token is invalid.
